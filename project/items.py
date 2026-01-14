@@ -1,6 +1,8 @@
 from abc import ABC
 
 from project.datatypes import Stats
+from project.valid_slot import WEAPON_SLOTS, ARMOR_SLOTS
+
 
 class Item(ABC):
     def __init__(self, name: str, weight: int, bonus_stats: Stats):
@@ -60,8 +62,8 @@ class Weapon(Item):
             raise ValueError("Il tipo dell'arma deve essere o melee o ranged")
         if not isinstance(slot, str):
             raise TypeError("Lo slot dell'arma deve essere una stringa")
-        if slot not in ["right hand", "left hand", "both hands"]:
-            raise ValueError("L'arma può essere equipaggiata solo negli slot \"left hand\", \"right hand\", \"both hands\"")
+        if slot not in WEAPON_SLOTS:
+            raise ValueError(f"L'arma può essere equipaggiata solo negli slot: {WEAPON_SLOTS}")
         self.__damage_range = damage_range
         self.__weapon_type = weapon_type
         self.__slot = slot
@@ -88,6 +90,38 @@ class Weapon(Item):
     @property
     def slot(self):
         return self.__slot
+
+class ArmorPiece(Item):
+    def __init__(self, name: str, weight: int, bonus_stats: Stats, slot: str, mitigation: int):
+        super().__init__(name, weight, bonus_stats)
+        if not isinstance(slot, str):
+            raise TypeError("Lo slot in cui il pezzo dell'armatura può essere equipaggiato deve essere una stringa")
+        if slot not in ARMOR_SLOTS:
+            raise ValueError(f"Un pezzo di armatura può essere equipaggiato solo negli slot: {ARMOR_SLOTS}")
+        if not isinstance(mitigation, int):
+            raise TypeError("I danni mitigati devono essere rappresentati da un intero")
+        if mitigation < 0:
+            raise ValueError("I danni mitigati non possono essere meno di 0")
+        self.__mitigation = mitigation
+        self.__slot = slot
+
+    @property
+    def mitigation(self):
+        return self.__mitigation
+
+    @mitigation.setter
+    def mitigation(self, value: int):
+        if not isinstance(value, int):
+            raise TypeError("I danni mitigati devono essere rappresentati da un intero")
+        if value < 0:
+            raise ValueError("I danni mitigati non possono essere meno di 0")
+        self.__mitigation = value
+
+    @property
+    def slot(self):
+        return self.__slot
+
+
 
 
 
