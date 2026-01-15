@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
+from random import randint
 
 from project.datatypes import Stats, Buff
 from project.errors import InvalidEquipError
 from project.items import Item
 from project.valid_slot import CHARACTER_SLOTS
-
 class Character(ABC):
     def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int):
         if not isinstance(name, int):
@@ -45,9 +45,9 @@ class Character(ABC):
         return self.__hp
 
     @hp.setter
-    def hp(self, value: int):
-        if not isinstance(value, int):
-            TypeError("La vita deve essere rappresentata da un intero")
+    def hp(self, value: int | float):
+        if not isinstance(value, int) and not isinstance(value, float):
+            TypeError("La vita deve essere rappresentata da un intero o da un numero decimale")
         if value < 0:
             ValueError("La vita non può essere negativa")
         self.__hp = value
@@ -100,9 +100,9 @@ class Character(ABC):
             raise ValueError("L'oggetto da disequipaggiare non è nell'quipaggiamento del personaggio")
         self.__equipment[item.slot] = None
 
-    def receive_damage(self, damage: int) -> None:
-        if not isinstance(damage, int):
-            raise TypeError("Il danno deve essere un intero")
+    def receive_damage(self, damage: float) -> None:
+        if not isinstance(damage, float):
+            raise TypeError("Il danno deve essere un numero decimale (float)")
         if damage < 0:
             raise ValueError("Il danno deve essere maggiore di 0")
         self.hp = max(0, (self.hp - damage))
@@ -130,6 +130,39 @@ class Character(ABC):
         pass
 
     @abstractmethod
-    def use_special_ability(self, target: "Character"):
+    def use_special_ability(self):
         pass
+
+class Warrior(Character):
+    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, damage_bonus: tuple[int, int]):
+        super().__init__(name, hp, base_stats, equipment, mana)
+        if not isinstance(damage_bonus, tuple):
+            raise TypeError("I danni aggiuntivi devono essere rappresentati da un intero")
+        min_damage, max_damage = damage_bonus
+        if not isinstance(min_damage, int) or not isinstance(max_damage, int):
+            raise TypeError("I danni aggiuntivi devono essere rappresentati da una tupla contentente due interi")
+        if min_damage > max_damage:
+            raise ValueError("Il danno minimo non può essere maggiore del danno massimo")
+        self.__damage_bonus = damage_bonus
+        self.__special_ability = Buff("Warrior's Might", "strength", 5, 3)
+
+    @property
+    def damage_bonus(self):
+        return self.__damage_bonus
+
+    @property
+    def special_ability(self):
+        return self.__special_ability
+
+    def attack(self, target: "Character") -> None:
+        if self.equipment["weapon"] is not None:
+            player_stats = self.base_stats + self.equipment["weapon"].bonus_stats
+        else:
+            player_stats = self.base_stats
+        damage = (player_stats.strength * 0.5) + (player_stats.dexterity * 0.3) + (player_stats.intelligence * 0.2) + randint(self.damage_bonus[0], self.damage_bonus[1])
+        target.receive_damage(damage)
+
+    def use_special_ability(self) -> None:
+        self.add_buff(self.__special_ability)
+
 
