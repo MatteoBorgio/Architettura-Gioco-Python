@@ -5,18 +5,19 @@ from project.datatypes import Stats, Buff
 from project.errors import InvalidEquipError
 from project.items import Item
 from project.valid_slot import CHARACTER_SLOTS
+
 class Character(ABC):
     def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int):
-        if not isinstance(name, int):
-            TypeError("Il nome deve essere una stringa")
+        if not isinstance(name, str):
+            raise TypeError("Il nome deve essere una stringa")
         if name == "":
-            ValueError("Il nome non può essere una stringa vuota")
+            raise ValueError("Il nome non può essere una stringa vuota")
         if not isinstance(hp, int):
-            TypeError("La vita deve essere rappresentata da un intero")
+            raise TypeError("La vita deve essere rappresentata da un intero")
         if hp <= 0:
-            TypeError("La vita deve essere inizializzata maggiore di 0")
+            raise TypeError("La vita deve essere inizializzata maggiore di 0")
         if not isinstance(base_stats, Stats):
-            TypeError("Le statistiche base devono essere un'istanza di Stats")
+            raise TypeError("Le statistiche base devono essere un'istanza di Stats")
         if not isinstance(equipment, dict):
             raise TypeError("L'equipaggiamento deve essere un dizionario")
         for k, v in equipment.items():
@@ -47,9 +48,9 @@ class Character(ABC):
     @hp.setter
     def hp(self, value: int | float):
         if not isinstance(value, int) and not isinstance(value, float):
-            TypeError("La vita deve essere rappresentata da un intero o da un numero decimale")
+            raise TypeError("La vita deve essere rappresentata da un intero o da un numero decimale")
         if value < 0:
-            ValueError("La vita non può essere negativa")
+            raise ValueError("La vita non può essere negativa")
         self.__hp = value
 
     @property
@@ -59,7 +60,7 @@ class Character(ABC):
     @base_stats.setter
     def base_stats(self, value: Stats):
         if not isinstance(value, Stats):
-            TypeError("Le statistiche base devono essere un'istanza di Stats")
+            raise TypeError("Le statistiche base devono essere un'istanza di Stats")
         self.__base_stats = value
 
     @property
@@ -92,6 +93,7 @@ class Character(ABC):
         if self.__equipment[item.slot] is not None:
             raise InvalidEquipError
         self.__equipment[item.slot] = item
+        self.__base_stats = self.base_stats + item.bonus_stats
 
     def unequip(self, item: Item) -> None:
         if not isinstance(item, Item):
@@ -99,6 +101,7 @@ class Character(ABC):
         if self.equipment[item.slot] != item:
             raise ValueError("L'oggetto da disequipaggiare non è nell'quipaggiamento del personaggio")
         self.__equipment[item.slot] = None
+        self.__base_stats = self.base_stats - item.bonus_stats
 
     def receive_damage(self, damage: float) -> None:
         if not isinstance(damage, float):
@@ -142,6 +145,9 @@ class Character(ABC):
     def use_special_ability(self):
         pass
 
+    def __str__(self):
+        return f"{self.name} ({self.hp}/{self.max_hp})"
+
 class Warrior(Character):
     def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, damage_bonus: tuple[int, int]):
         super().__init__(name, hp, base_stats, equipment, mana)
@@ -164,14 +170,8 @@ class Warrior(Character):
         return self.__special_ability
 
     def attack(self, target: "Character") -> None:
-        if self.equipment["weapon"] is not None:
-            player_stats = self.base_stats + self.equipment["weapon"].bonus_stats
-        else:
-            player_stats = self.base_stats
-        damage = (player_stats.strength * 0.5) + (player_stats.dexterity * 0.3) + (player_stats.intelligence * 0.2) + randint(self.damage_bonus[0], self.damage_bonus[1])
+        damage = (self.base_stats.strength * 0.5) + (self.base_stats.dexterity * 0.3) + (self.base_stats.intelligence * 0.2) + randint(self.damage_bonus[0], self.damage_bonus[1])
         target.receive_damage(damage)
 
     def use_special_ability(self) -> None:
         self.add_buff(self.__special_ability)
-
-

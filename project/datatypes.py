@@ -25,6 +25,20 @@ class Stats:
             dexterity = self.dexterity + other.dexterity
         )
 
+    def __sub__(self, other: "Stats"):
+        if not isinstance(other, Stats):
+            return NotImplemented
+
+        return Stats(
+            strength = max(0, (self.strength - other.strength)),
+            intelligence = max(0, (self.intelligence - other.intelligence)),
+            defense = max(0, (self.defense - other.defense)),
+            dexterity = max(0, (self.dexterity - other.dexterity))
+        )
+
+    def __str__(self):
+        return f"Strength: {self.strength}; Intelligence: {self.intelligence}; Defense: {self.defense}; Dexterity: {self.dexterity}"
+
 @dataclass
 class Buff:
     name: str
@@ -45,3 +59,6 @@ class Buff:
             raise TypeError("La durata deve essere un intero")
         if self.duration <= 0:
             raise ValueError("La durata deve essere maggiore di 0")
+
+    def __str__(self):
+        return f"{self.name} che potenzia {self.stat} di {self.amount} per {self.duration} turni"

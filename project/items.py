@@ -45,6 +45,9 @@ class Item(ABC):
             raise TypeError("Le statistiche bonus devono essere un'istanza di Stats")
         self.__bonus_stats = value
 
+    def __str__(self):
+        return f"{self.name} equipaggiato nello slot {self.slot}"
+
 class Weapon(Item):
     def __init__(self, name: str, weight: int, bonus_stats: Stats, damage_range: tuple[int, int], weapon_type: str, slot: str):
         super().__init__(name, weight, bonus_stats)
@@ -68,6 +71,10 @@ class Weapon(Item):
         self.__slot = slot
 
     @property
+    def slot(self):
+        return self.__slot
+
+    @property
     def damage_range(self):
         return self.__damage_range
 
@@ -86,10 +93,6 @@ class Weapon(Item):
     def weapon_type(self):
         return self.__weapon_type
 
-    @property
-    def slot(self):
-        return self.__slot
-
 class ArmorPiece(Item):
     def __init__(self, name: str, weight: int, bonus_stats: Stats, slot: str, mitigation: int):
         super().__init__(name, weight, bonus_stats)
@@ -105,6 +108,10 @@ class ArmorPiece(Item):
         self.__slot = slot
 
     @property
+    def slot(self):
+        return self.__slot
+
+    @property
     def mitigation(self):
         return self.__mitigation
 
@@ -115,10 +122,6 @@ class ArmorPiece(Item):
         if value < 0:
             raise ValueError("I danni mitigati non possono essere meno di 0")
         self.__mitigation = value
-
-    @property
-    def slot(self):
-        return self.__slot
 
 
 
