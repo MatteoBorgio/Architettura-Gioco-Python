@@ -137,6 +137,27 @@ class Character(ABC):
         for buff in buffs:
             setattr(self.__base_stats, buff.stat,(getattr(self.__base_stats, buff.stat) + buff.amount))
 
+    def remove_buffs(self, buffs: list[Buff]):
+        if not isinstance(buffs, list):
+            raise TypeError("I buff devono essere rappresentati da una lista")
+        for element in buffs:
+            if not isinstance(element, Buff):
+                raise TypeError("Tutti i buff devono essere un'istanza di Buff")
+        for buff in buffs:
+            if buff.duration == 0:
+                setattr(self.__base_stats, buff.stat, (getattr(self.__base_stats, buff.stat) - buff.amount))
+                self.__active_buffs.remove(buff)
+
+    @staticmethod
+    def tick_buffs(buffs: list[Buff]):
+        if not isinstance(buffs, list):
+            raise TypeError("I buff devono essere rappresentati da una lista")
+        for element in buffs:
+            if not isinstance(element, Buff):
+                raise TypeError("Tutti i buff devono essere un'istanza di Buff")
+        for buff in buffs:
+            buff.duration -= 1
+
     @abstractmethod
     def attack(self, target: "Character"):
         pass
