@@ -3,10 +3,11 @@ from abc import ABC, abstractmethod
 from project.datatypes import Stats, Buff
 from project.errors import InvalidEquipError
 from project.items import Item
+from project.potions import Potion
 from project.valid_slot import CHARACTER_SLOTS
 
 class Character(ABC):
-    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff):
+    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion]):
         if not isinstance(name, str):
             raise TypeError("Il nome deve essere una stringa")
         if name == "":
@@ -34,6 +35,12 @@ class Character(ABC):
             raise ValueError("Il mana consumato per ogni attacco deve essere maggiore di 0")
         if not isinstance(special_ability, Buff):
             raise TypeError("L'abilità speciale deve essere un'istanza di buff")
+        if not isinstance(potions_set, list):
+            raise TypeError("Il set di pozioni deve essere rappresentato da una lista")
+        for element in potions_set:
+            if not isinstance(element, Potion):
+                raise TypeError("Il set di pozioni deve essere composto da sottoclassi di Potion")
+
         self.__name = name
         self.__hp = hp
         self.__base_stats = base_stats
@@ -44,6 +51,7 @@ class Character(ABC):
         self.__special_ability = special_ability
         self.__mana_per_attack = mana_per_attack
         self.__special_ability_used = False
+        self.__potions_set = potions_set
 
     @property
     def name(self):
@@ -112,6 +120,14 @@ class Character(ABC):
     @property
     def active_buffs(self):
         return self.__active_buffs
+
+    @property
+    def potions_set(self):
+        return self.__potions_set
+
+    @property
+    def show_potions(self):
+        return "{" + ", ".join(str(p) for p in self.__potions_set) + "}"
 
     def equip(self, item: Item) -> None:
         if not isinstance(item, Item):
@@ -186,6 +202,17 @@ class Character(ABC):
                 raise TypeError("Tutti i buff devono essere un'istanza di Buff")
         for buff in buffs:
             buff.duration -= 1
+
+    @staticmethod
+    def tick_potion(potions: list[Potion]):
+        if not isinstance(potions, list):
+            raise TypeError("Il set di pozioni deve essere una lista")
+        for element in potions:
+            if not isinstance(element, Potion):
+                raise TypeError("Gli elementi nel set di pozioni devono essere tutte istanze di sottoclassi di Potion")
+        for potion in potions:
+            if potion.uses == 0:
+                potions.remove(potion)
 
     @abstractmethod
     def attack(self, target: "Character"):

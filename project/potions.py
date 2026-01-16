@@ -1,9 +1,9 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 from project.characters import Character
 from project.datatypes import Buff
 
-class Potion:
+class Potion(ABC):
     def __init__(self, name: str, mana_consume: int, uses=1):
         if not isinstance(name, str):
             raise TypeError("Il nome deve essere una stringa")
@@ -33,6 +33,14 @@ class Potion:
     def uses(self):
         return self.__uses
 
+    @uses.setter
+    def uses(self, value: int):
+        if not isinstance(value, int):
+            raise TypeError("Gli usi della pozione devono essere rappresentati da un intero")
+        if value < 0:
+            raise ValueError("Gli usi della pozione non possono essere negativi")
+        self.__uses = value
+
     @abstractmethod
     def use(self, character: Character):
         pass
@@ -54,6 +62,7 @@ class HealPotion(Potion):
         if not isinstance(character, Character):
             raise TypeError("Una pozione può essere utilizzata solo su un personaggio")
         character.hp = min(character.max_hp, (character.hp + self.healing_effect))
+        self.uses -= 1
 
     def __str__(self):
         return f"{self.name}: pozione dal costo di {self.mana_consume} che cura {self.__healing_effect} e può essere utilizzata {self.uses} volte"
@@ -76,6 +85,7 @@ class BuffPotion(Potion):
             character.add_buff(self.buff)
         except AttributeError:
             raise ValueError("Personaggio non valido")
+        self.uses -= 1
 
     def __str__(self):
         return f"{self.name}: pozione dal costo di {self.mana_consume} che aggiunge il buff {self.buff} \nPuò essere usata {self.uses} volte"
