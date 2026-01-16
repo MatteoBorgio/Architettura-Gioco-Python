@@ -55,6 +55,9 @@ class HealPotion(Potion):
             raise TypeError("Una pozione può essere utilizzata solo su un personaggio")
         character.hp = min(character.max_hp, (character.hp + self.healing_effect))
 
+    def __str__(self):
+        return f"{self.name}: pozione dal costo di {self.mana_consume} che cura {self.__healing_effect} e può essere utilizzata {self.uses} volte"
+
 class BuffPotion(Potion):
     def __init__(self, name: str, mana_consume: int, buff: Buff, uses=1):
         super().__init__(name, mana_consume, uses)
@@ -73,3 +76,6 @@ class BuffPotion(Potion):
             character.add_buff(self.buff)
         except AttributeError:
             raise ValueError("Personaggio non valido")
+
+    def __str__(self):
+        return f"{self.name}: pozione dal costo di {self.mana_consume} che aggiunge il buff {self.buff} \nPuò essere usata {self.uses} volte"
