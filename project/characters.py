@@ -36,6 +36,7 @@ class Character(ABC):
         self.__mana = mana
         self.__max_hp = hp
         self.__active_buffs = []
+        self.__special_ability = None
 
     @property
     def name(self):
@@ -52,6 +53,10 @@ class Character(ABC):
         if value < 0:
             raise ValueError("La vita non può essere negativa")
         self.__hp = value
+
+    @property
+    def special_ability(self):
+        return self.__special_ability
 
     @property
     def base_stats(self):
@@ -148,6 +153,9 @@ class Character(ABC):
                 setattr(self.__base_stats, buff.stat, (getattr(self.__base_stats, buff.stat) - buff.amount))
                 self.__active_buffs.remove(buff)
 
+    def use_special_ability(self):
+        self.add_buff(self.__special_ability)
+
     @staticmethod
     def tick_buffs(buffs: list[Buff]):
         if not isinstance(buffs, list):
@@ -160,10 +168,6 @@ class Character(ABC):
 
     @abstractmethod
     def attack(self, target: "Character"):
-        pass
-
-    @abstractmethod
-    def use_special_ability(self):
         pass
 
     def __str__(self):
@@ -186,13 +190,6 @@ class Warrior(Character):
     def damage_bonus(self):
         return self.__damage_bonus
 
-    @property
-    def special_ability(self):
-        return self.__special_ability
-
     def attack(self, target: "Character") -> None:
         damage = (self.base_stats.strength * 0.5) + (self.base_stats.dexterity * 0.3) + (self.base_stats.intelligence * 0.2) + randint(self.damage_bonus[0], self.damage_bonus[1])
         target.receive_damage(damage)
-
-    def use_special_ability(self) -> None:
-        self.add_buff(self.__special_ability)
