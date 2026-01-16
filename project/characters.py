@@ -7,7 +7,7 @@ from project.items import Item
 from project.valid_slot import CHARACTER_SLOTS
 
 class Character(ABC):
-    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int):
+    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff):
         if not isinstance(name, str):
             raise TypeError("Il nome deve essere una stringa")
         if name == "":
@@ -29,6 +29,12 @@ class Character(ABC):
            raise TypeError("Il mana deve essere rappresentato da un intero")
         if mana <= 0:
             raise ValueError("Il mana deve essere inizializzato maggiore di 0")
+        if not isinstance(mana_per_attack, int):
+            raise TypeError("Il mana consumato per ogni attacco deve essere un intero")
+        if mana_per_attack <= 0:
+            raise ValueError("Il mana consumato per ogni attacco deve essere maggiore di 0")
+        if not isinstance(special_ability, Buff):
+            raise TypeError("L'abilità speciale deve essere un'istanza di buff")
         self.__name = name
         self.__hp = hp
         self.__base_stats = base_stats
@@ -36,7 +42,9 @@ class Character(ABC):
         self.__mana = mana
         self.__max_hp = hp
         self.__active_buffs = []
-        self.__special_ability = None
+        self.__special_ability = special_ability
+        self.__mana_per_attack = mana_per_attack
+        self.__special_ability_used = False
 
     @property
     def name(self):
@@ -47,9 +55,9 @@ class Character(ABC):
         return self.__hp
 
     @hp.setter
-    def hp(self, value: int | float):
-        if not isinstance(value, int) and not isinstance(value, float):
-            raise TypeError("La vita deve essere rappresentata da un intero o da un numero decimale")
+    def hp(self, value: int):
+        if not isinstance(value, int):
+            raise TypeError("La vita deve essere rappresentata da un intero")
         if value < 0:
             raise ValueError("La vita non può essere negativa")
         self.__hp = value
@@ -69,12 +77,26 @@ class Character(ABC):
         self.__base_stats = value
 
     @property
+    def used_special_ability(self):
+        return self.__special_ability_used
+
+    @used_special_ability.setter
+    def used_special_ability(self, value: bool):
+        if not isinstance(value, bool):
+            raise TypeError("Lo stato di utilizzo dell'abilità speciale deve essere un booleano")
+        self.__special_ability_used = value
+
+    @property
     def equipment(self):
         return self.__equipment
 
     @property
     def mana(self):
         return self.__mana
+
+    @property
+    def mana_per_attack(self):
+        return self.__mana_per_attack
 
     @mana.setter
     def mana(self, value: int):
@@ -113,7 +135,7 @@ class Character(ABC):
             raise TypeError("Il danno deve essere un numero decimale (float)")
         if damage < 0:
             raise ValueError("Il danno deve essere maggiore di 0")
-        self.hp = max(0, (self.hp - damage))
+        self.hp = max(0, int(self.hp - damage))
 
     def is_alive(self) -> bool:
         if self.__hp > 0:
@@ -174,8 +196,8 @@ class Character(ABC):
         return f"{self.name} ({self.hp}/{self.max_hp})"
 
 class Warrior(Character):
-    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, damage_bonus: tuple[int, int]):
-        super().__init__(name, hp, base_stats, equipment, mana)
+    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, damage_bonus: tuple[int, int]):
+        super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability)
         if not isinstance(damage_bonus, tuple):
             raise TypeError("I danni aggiuntivi devono essere rappresentati da un intero")
         min_damage, max_damage = damage_bonus
@@ -184,12 +206,22 @@ class Warrior(Character):
         if min_damage > max_damage:
             raise ValueError("Il danno minimo non può essere maggiore del danno massimo")
         self.__damage_bonus = damage_bonus
-        self.__special_ability = Buff("Warrior's Might", "strength", 5, 3)
 
     @property
     def damage_bonus(self):
         return self.__damage_bonus
 
-    def attack(self, target: "Character") -> None:
-        damage = (self.base_stats.strength * 0.5) + (self.base_stats.dexterity * 0.3) + (self.base_stats.intelligence * 0.2) + randint(self.damage_bonus[0], self.damage_bonus[1])
-        target.receive_damage(damage)
+    def attack(self, target: "Character") -> float:
+        if (self.mana - self.mana_per_attack) >= 0:
+            damage = (self.base_stats.strength * 0.5) + (self.base_stats.dexterity * 0.3) + (self.base_stats.intelligence * 0.2) + randint(self.damage_bonus[0], self.damage_bonus[1])
+            target.receive_damage(damage)
+            self.mana -= self.mana_per_attack
+            return damage
+        else:
+            return 0
+
+
+
+
+
+
