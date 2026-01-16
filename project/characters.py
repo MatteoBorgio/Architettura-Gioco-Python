@@ -195,33 +195,6 @@ class Character(ABC):
     def __str__(self):
         return f"{self.name} ({self.hp}/{self.max_hp})"
 
-class Warrior(Character):
-    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, damage_bonus: tuple[int, int]):
-        super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability)
-        if not isinstance(damage_bonus, tuple):
-            raise TypeError("I danni aggiuntivi devono essere rappresentati da un intero")
-        min_damage, max_damage = damage_bonus
-        if not isinstance(min_damage, int) or not isinstance(max_damage, int):
-            raise TypeError("I danni aggiuntivi devono essere rappresentati da una tupla contentente due interi")
-        if min_damage > max_damage:
-            raise ValueError("Il danno minimo non può essere maggiore del danno massimo")
-        self.__damage_bonus = damage_bonus
-
-    @property
-    def damage_bonus(self):
-        return self.__damage_bonus
-
-    def attack(self, target: "Character") -> float:
-        if (self.mana - self.mana_per_attack) >= 0:
-            damage = (self.base_stats.strength * 0.5) + (self.base_stats.dexterity * 0.3) + (self.base_stats.intelligence * 0.2) + randint(self.damage_bonus[0], self.damage_bonus[1])
-            target.receive_damage(damage)
-            self.mana -= self.mana_per_attack
-            return damage
-        else:
-            return 0
-
-
-
 
 
 
