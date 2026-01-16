@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from random import randint
 
 from project.datatypes import Stats, Buff
 from project.errors import InvalidEquipError
