@@ -53,7 +53,7 @@ class Character(ABC):
         self.__mana_per_attack = mana_per_attack
         self.__special_ability_used = False
         self.__potions_set = potions_set
-        self.__active_poisons = []
+        self.active_poisons = []
 
     @property
     def name(self):
@@ -124,10 +124,6 @@ class Character(ABC):
         return self.__active_buffs
 
     @property
-    def active_poisons(self):
-        return self.__active_poisons
-
-    @property
     def potions_set(self):
         return self.__potions_set
 
@@ -167,9 +163,16 @@ class Character(ABC):
     def heal(self, amount: int) -> None:
         if not isinstance(amount, int):
             raise TypeError("La quantità di hp curati deve essere rappresentata da un intero")
-        if amount == 0:
+        if amount < 0:
             raise ValueError("La quantità di hp curati non può essere negativa")
         self.hp = min(self.max_hp, (self.hp + amount))
+
+    def recharge(self, amount: int) -> None:
+        if not isinstance(amount, int):
+            raise TypeError("La quantità di mana da ricaricare deve essere rappresentata da un intero")
+        if amount < 0:
+            raise ValueError("La quantità di mana da ricaricare non può essere negativa")
+        self.mana += amount
 
     def add_buff(self, buff: Buff) -> None:
         if not isinstance(buff, Buff):
@@ -199,7 +202,7 @@ class Character(ABC):
     def add_poison(self, poison: Poison):
         if not isinstance(poison, Poison):
             raise TypeError("Un veleno deve essere un'istanza di Poison")
-        self.__active_poisons.append(poison)
+        self.active_poisons.append(poison)
 
     def apply_poisons(self, poisons: list[Poison]):
         if not isinstance(poisons, list):
@@ -218,7 +221,7 @@ class Character(ABC):
                 raise TypeError("Tutti i veleni devono essere un'istanza di Poison")
         for poison in poisons:
             if poison.duration == 0:
-                self.__active_poisons.remove(poison)
+                self.active_poisons.remove(poison)
 
     def use_special_ability(self):
         self.add_buff(self.__special_ability)
@@ -273,6 +276,36 @@ class Warrior(Character):
         self.hp = max(0, int(self.hp - (damage - (self.base_stats.defense * 0.3) - self.shield)))
 
     def attack(self, target: "Character") -> int:
-        damage_dealt = int((self.base_stats.strength * 0.5) + (self.base_stats.dexterity * 0.3) + (self.base_stats.intelligence * 0.2))
-        target.receive_damage(damage_dealt)
-        return damage_dealt
+        if (self.mana - self.mana_per_attack) >= 0:
+            damage_dealt = int((self.base_stats.strength * 0.5) + (self.base_stats.dexterity * 0.3) + (self.base_stats.intelligence * 0.2))
+            target.receive_damage(damage_dealt)
+            self.mana -= self.mana_per_attack
+            return damage_dealt
+        else:
+            return 0
+
+class Cleric(Character):
+    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], poisons_mitigation: int):
+        super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability, potions_set)
+        if not isinstance(poisons_mitigation, int):
+            raise TypeError("La mitigazione dei veleni deve essere rappresentata da un intero")
+        if poisons_mitigation <= 0:
+            raise ValueError("La mitigazione dei veleni deve essere maggiore di 0")
+        self.__poisons_mitigation = poisons_mitigation
+
+    @property
+    def poisons_mitigation(self):
+        return self.__poisons_mitigation
+
+    def mitigate_poisons(self) -> None:
+        for poison in self.active_poisons:
+            poison.damage_per_turn = max(0, poison.damage_per_turn - self.poisons_mitigation)
+
+    def attack(self, target: "Character") -> int:
+        if (self.mana - self.mana_per_attack) >= 0:
+            damage_dealt = int((self.base_stats.strength * 0.3) + (self.base_stats.dexterity * 0.3) + (self.base_stats.intelligence * 0.4))
+            target.receive_damage(damage_dealt)
+            self.mana -= self.mana_per_attack
+            return damage_dealt
+        else:
+            return 0
