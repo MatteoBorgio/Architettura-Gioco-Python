@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import override
 
 from project.datatypes import Stats, Buff
 from project.errors import InvalidEquipError
@@ -145,12 +146,12 @@ class Character(ABC):
         self.__equipment[item.slot] = None
         self.__base_stats = self.base_stats - item.bonus_stats
 
-    def receive_damage(self, damage: float) -> None:
-        if not isinstance(damage, float):
-            raise TypeError("Il danno deve essere un numero decimale (float)")
+    def receive_damage(self, damage: int) -> None:
+        if not isinstance(damage, int):
+            raise TypeError("Il danno deve essere un intero")
         if damage < 0:
             raise ValueError("Il danno deve essere maggiore di 0")
-        self.hp = max(0, int(self.hp - damage))
+        self.hp = max(0, int(self.hp - (damage - (self.base_stats.defense * 0.3))))
 
     def is_alive(self) -> bool:
         if self.__hp > 0:
@@ -215,12 +216,34 @@ class Character(ABC):
                 potions.remove(potion)
 
     @abstractmethod
-    def attack(self, target: "Character"):
+    def attack(self, target: "Character") -> int:
         pass
 
     def __str__(self):
         return f"{self.name} ({self.hp}/{self.max_hp})"
 
+class Warrior(Character):
+    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], shield: int):
+        super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability, potions_set)
+        if not isinstance(shield, int):
+            raise TypeError("Lo scudo deve essere rappresentato da un intero")
+        if shield <= 0:
+            raise ValueError("Lo scudo deve essere maggiore di 0")
+        self.__shield = shield
 
+    @property
+    def shield(self):
+        return self.__shield
 
+    @override
+    def receive_damage(self, damage: int) -> None:
+        if not isinstance(damage, int):
+            raise TypeError("Il danno deve essere un intero")
+        if damage < 0:
+            raise ValueError("Il danno deve essere maggiore di 0")
+        self.hp = max(0, int(self.hp - (damage - (self.base_stats.defense * 0.3) - self.shield)))
 
+    def attack(self, target: "Character") -> int:
+        damage_dealt = int((self.base_stats.strength * 0.5) + (self.base_stats.dexterity * 0.3) + (self.base_stats.intelligence * 0.2))
+        target.receive_damage(damage_dealt)
+        return damage_dealt

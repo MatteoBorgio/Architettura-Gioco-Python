@@ -94,34 +94,17 @@ class Weapon(Item):
         return self.__weapon_type
 
 class ArmorPiece(Item):
-    def __init__(self, name: str, weight: int, bonus_stats: Stats, slot: str, mitigation: int):
+    def __init__(self, name: str, weight: int, bonus_stats: Stats, slot: str):
         super().__init__(name, weight, bonus_stats)
         if not isinstance(slot, str):
             raise TypeError("Lo slot in cui il pezzo dell'armatura può essere equipaggiato deve essere una stringa")
         if slot not in ARMOR_SLOTS:
             raise ValueError(f"Un pezzo di armatura può essere equipaggiato solo negli slot: {ARMOR_SLOTS}")
-        if not isinstance(mitigation, int):
-            raise TypeError("I danni mitigati devono essere rappresentati da un intero")
-        if mitigation < 0:
-            raise ValueError("I danni mitigati non possono essere meno di 0")
-        self.__mitigation = mitigation
         self.__slot = slot
 
     @property
     def slot(self):
         return self.__slot
-
-    @property
-    def mitigation(self):
-        return self.__mitigation
-
-    @mitigation.setter
-    def mitigation(self, value: int):
-        if not isinstance(value, int):
-            raise TypeError("I danni mitigati devono essere rappresentati da un intero")
-        if value < 0:
-            raise ValueError("I danni mitigati non possono essere meno di 0")
-        self.__mitigation = value
 
 
 
