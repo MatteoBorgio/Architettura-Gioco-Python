@@ -47,7 +47,7 @@ class Buff:
     duration: int
 
     def __post_init__(self):
-        if not isinstance(self.name, str) or not self.name:
+        if not isinstance(self.name, str) or self.name == "":
             raise ValueError("Il nome deve essere una stringa non vuota")
         if self.stat not in ["defense", "strength", "dexterity", "intelligence"]:
             raise ValueError("La statistica data non è una statistica valida")
@@ -62,3 +62,25 @@ class Buff:
 
     def __str__(self):
         return f"{self.name} che potenzia {self.stat} di {self.amount} per {self.duration} turni"
+
+@dataclass
+class Poison:
+    name: str
+    damage_per_turn: int
+    duration: int
+
+    def __post_init__(self):
+        if not isinstance(self.name, str) or self.name == "":
+            raise ValueError("Il nome deve essere una stringa non vuota")
+        if not isinstance(self.damage_per_turn, int):
+            raise TypeError("I danni inflitti ogni turno devono essere rappresentati da un intero")
+        if self.damage_per_turn <= 0:
+            raise ValueError("I danni inflitti ogni turno devono essere maggiori di 0")
+        if not isinstance(self.duration, int):
+            raise TypeError("La durata deve essere un intero")
+        if self.duration <= 0:
+            raise ValueError("La durata deve essere maggiore di 0")
+
+    def __str__(self):
+        return f"{self.name} che infligge {self.damage_per_turn} per turno per {self.duration} turni"
+

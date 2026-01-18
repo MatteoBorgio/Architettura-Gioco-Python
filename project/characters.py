@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import override
 
-from project.datatypes import Stats, Buff
+from project.datatypes import Stats, Buff, Poison
 from project.errors import InvalidEquipError
 from project.items import Item
 from project.potions import Potion
@@ -53,6 +53,7 @@ class Character(ABC):
         self.__mana_per_attack = mana_per_attack
         self.__special_ability_used = False
         self.__potions_set = potions_set
+        self.__active_poisons = []
 
     @property
     def name(self):
@@ -123,6 +124,10 @@ class Character(ABC):
         return self.__active_buffs
 
     @property
+    def active_poisons(self):
+        return self.__active_poisons
+
+    @property
     def potions_set(self):
         return self.__potions_set
 
@@ -190,6 +195,30 @@ class Character(ABC):
             if buff.duration == 0:
                 setattr(self.__base_stats, buff.stat, (getattr(self.__base_stats, buff.stat) - buff.amount))
                 self.__active_buffs.remove(buff)
+
+    def add_poison(self, poison: Poison):
+        if not isinstance(poison, Poison):
+            raise TypeError("Un veleno deve essere un'istanza di Poison")
+        self.__active_poisons.append(poison)
+
+    def apply_poisons(self, poisons: list[Poison]):
+        if not isinstance(poisons, list):
+            raise TypeError("I veleni devono essere rappresentati da una lista")
+        for element in poisons:
+            if not isinstance(element, Poison):
+                raise TypeError("Tutti i veleni devono essere istanze di Poison")
+        for poison in poisons:
+            self.hp = max(0, self.hp - poison.damage_per_turn)
+
+    def remove_poisons(self, poisons: list[Poison]):
+        if not isinstance(poisons, list):
+            raise TypeError("I veleni devono essere rappresentati da una lista")
+        for element in poisons:
+            if not isinstance(element, Poison):
+                raise TypeError("Tutti i veleni devono essere un'istanza di Poison")
+        for poison in poisons:
+            if poison.duration == 0:
+                self.__active_poisons.remove(poison)
 
     def use_special_ability(self):
         self.add_buff(self.__special_ability)
