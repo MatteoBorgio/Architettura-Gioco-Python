@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from random import randint
 from typing import override
 
 from project.datatypes import Stats, Buff, Poison
@@ -285,17 +286,26 @@ class Warrior(Character):
             return 0
 
 class Cleric(Character):
-    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], poisons_mitigation: int):
+    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], poisons_mitigation: int, healing_per_attack: int):
         super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability, potions_set)
         if not isinstance(poisons_mitigation, int):
             raise TypeError("La mitigazione dei veleni deve essere rappresentata da un intero")
         if poisons_mitigation <= 0:
             raise ValueError("La mitigazione dei veleni deve essere maggiore di 0")
+        if not isinstance(healing_per_attack, int):
+            raise TypeError("I danni recuperati dopo un attacco devono essere rappresentati da un intero")
+        if healing_per_attack <= 0:
+            raise ValueError("I danni recuperati dopo un attacco devono essere maggiori di 0")
         self.__poisons_mitigation = poisons_mitigation
+        self.__healing_per_attack = healing_per_attack
 
     @property
     def poisons_mitigation(self):
         return self.__poisons_mitigation
+
+    @property
+    def healing_per_attack(self):
+        return self.__healing_per_attack
 
     def mitigate_poisons(self) -> None:
         for poison in self.active_poisons:
@@ -306,6 +316,30 @@ class Cleric(Character):
             damage_dealt = int((self.base_stats.strength * 0.3) + (self.base_stats.dexterity * 0.3) + (self.base_stats.intelligence * 0.4))
             target.receive_damage(damage_dealt)
             self.mana -= self.mana_per_attack
+            self.heal(self.healing_per_attack)
             return damage_dealt
         else:
             return 0
+
+class Thief(Character):
+    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], critical_bonus: int):
+        super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability, potions_set)
+        if not isinstance(critical_bonus, int):
+            raise TypeError("I danni critici devono essere rappresentati da un intero")
+        if critical_bonus <= 0:
+            raise ValueError("I danni critici devono essere rappresentati da un intero")
+        self.__critical_bonus = critical_bonus
+
+    @property
+    def critical_bonus(self):
+        return self.__critical_bonus
+
+    def attack(self, target: "Character") -> int:
+        if (self.mana - self.mana_per_attack) >= 0:
+            damage_dealt = int((self.base_stats.strength * 0.1) + (self.base_stats.dexterity * 0.4) + (self.base_stats.intelligence * 0.5))
+            if randint(0, 1) == 1:
+                damage_dealt += self.critical_bonus
+            return damage_dealt
+        else:
+            return 0
+
