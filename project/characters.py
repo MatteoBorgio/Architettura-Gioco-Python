@@ -49,7 +49,7 @@ class Character(ABC):
         self.__equipment = equipment
         self.__mana = mana
         self.__max_hp = hp
-        self.__active_buffs = []
+        self.active_buffs = []
         self.__special_ability = special_ability
         self.__mana_per_attack = mana_per_attack
         self.__special_ability_used = False
@@ -121,10 +121,6 @@ class Character(ABC):
         return self.__max_hp
 
     @property
-    def active_buffs(self):
-        return self.__active_buffs
-
-    @property
     def potions_set(self):
         return self.__potions_set
 
@@ -178,7 +174,7 @@ class Character(ABC):
     def add_buff(self, buff: Buff) -> None:
         if not isinstance(buff, Buff):
             raise TypeError("Un buff deve essere un'istanza di Buff")
-        self.__active_buffs.append(buff)
+        self.active_buffs.append(buff)
 
     def apply_buffs(self, buffs: list[Buff]):
         if not isinstance(buffs, list):
@@ -198,7 +194,7 @@ class Character(ABC):
         for buff in buffs:
             if buff.duration == 0:
                 setattr(self.__base_stats, buff.stat, (getattr(self.__base_stats, buff.stat) - buff.amount))
-                self.__active_buffs.remove(buff)
+                self.active_buffs.remove(buff)
 
     def add_poison(self, poison: Poison):
         if not isinstance(poison, Poison):
@@ -339,6 +335,50 @@ class Thief(Character):
             damage_dealt = int((self.base_stats.strength * 0.1) + (self.base_stats.dexterity * 0.4) + (self.base_stats.intelligence * 0.5))
             if randint(0, 1) == 1:
                 damage_dealt += self.critical_bonus
+            target.receive_damage(damage_dealt)
+            self.mana -= self.mana_per_attack
+            return damage_dealt
+        else:
+            return 0
+
+class Wizard(Character):
+    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], buff_amount_boost: int, buff_duration_boost: int):
+        super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability, potions_set)
+        if not isinstance(buff_amount_boost, int):
+            raise TypeError("Il boost della quantità del potenziamento deve essere rappresentato da un intero")
+        if buff_amount_boost <= 0:
+            raise ValueError("Il boost della quantità del potenziamento deve essere maggiore di 0")
+        if not isinstance(buff_duration_boost, int):
+            raise TypeError("Il boost della durata del potenziamento deve essere rappresentato da un intero")
+        if buff_duration_boost <= 0:
+            raise ValueError("Il boost della durata del potenziamento deve essere maggiore di 0")
+        self.__buff_amount_boost = buff_duration_boost
+        self.__buff_duration_boost = buff_duration_boost
+        self.amount_boosted = False
+        self.duration_boosted = False
+
+    @property
+    def buff_amount_boost(self):
+        return self.__buff_amount_boost
+
+    @property
+    def buff_duration_boost(self):
+        return self.__buff_amount_boost
+
+    def boost_amount(self):
+        for buff in self.active_buffs:
+            buff.amount += self.buff_amount_boost
+        self.amount_boosted = True
+
+    def boost_duration(self):
+        for buff in self.active_buffs:
+            buff.duration += self.buff_amount_boost
+        self.duration_boosted = True
+
+    def attack(self, target: "Character") -> int:
+        if (self.mana - self.mana_per_attack) >= 0:
+            damage_dealt = int((self.base_stats.strength * 0.4) + (self.base_stats.dexterity * 0.2) + (self.base_stats.intelligence * 0.4))
+            target.receive_damage(damage_dealt)
             return damage_dealt
         else:
             return 0
