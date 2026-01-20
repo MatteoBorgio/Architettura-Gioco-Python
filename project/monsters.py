@@ -7,7 +7,7 @@ from project.items import Item
 from project.valid_slot import CHARACTER_SLOTS
 
 class Monster(ABC):
-    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item | None]):
+    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item | None], level: int):
         if not isinstance(name, str):
             raise TypeError("Il nome deve essere una stringa")
         if name == "":
@@ -31,10 +31,15 @@ class Monster(ABC):
                 raise ValueError(f"Gli oggetti possono essere equipaggiati solo in questi slot: {CHARACTER_SLOTS}")
             if not isinstance(v, Item) and v is not None:
                 raise ValueError("Gli unici oggetti validi da poter equipaggiare sono le istanze di Item o le sue sottoclassi")
+        if not isinstance(level, int):
+            raise TypeError("Il livello deve essere rappresentato da un intero")
+        if level <= 0:
+            raise ValueError("Il livello deve essere maggiore di 0")
+        self.level = level
         self.__name = name
-        self.__hp = hp
-        self.__base_damage = base_damage
-        self.__bonus_damage = bonus_damage
+        self.__hp = hp * level
+        self.__base_damage = base_damage * level
+        self.__bonus_damage = bonus_damage * level
         self.__equipment = equipment
 
     @property
@@ -91,8 +96,8 @@ class Monster(ABC):
         return damage
 
 class Goblin(Monster):
-    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item], buff_stole_per_turn: int):
-        super().__init__(name, hp, base_damage, bonus_damage, equipment)
+    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item], buff_stole_per_turn: int, level: int):
+        super().__init__(name, hp, base_damage, bonus_damage, equipment, level)
         if not isinstance(buff_stole_per_turn, int):
             raise TypeError("Il numero di buff da rimuovere per turno deve essere rappresentato da un intero")
         if buff_stole_per_turn <= 0:
