@@ -1,5 +1,6 @@
 from abc import ABC
 from random import choice, randint
+from typing import override
 
 from project.characters import Character
 from project.items import Item
@@ -88,6 +89,41 @@ class Monster(ABC):
             damage += self.bonus_damage
         target.receive_damage(damage)
         return damage
+
+class Goblin(Monster):
+    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item], buff_stole_per_turn: int):
+        super().__init__(name, hp, base_damage, bonus_damage, equipment)
+        if not isinstance(buff_stole_per_turn, int):
+            raise TypeError("Il numero di buff da rimuovere per turno deve essere rappresentato da un intero")
+        if buff_stole_per_turn <= 0:
+            raise ValueError("Il numero di buff da rimuovere per turno deve essere maggiore di 0")
+        self.__buff_stole_per_turn = buff_stole_per_turn
+
+    @property
+    def buff_stole_per_turn(self):
+        return self.__buff_stole_per_turn
+
+    def steal(self, target: Character) -> None:
+        if not isinstance(target, Character):
+            raise TypeError("I buff possono essere rimossi solo da sottoclassi di Character")
+        if len(target.active_buffs) <= self.buff_stole_per_turn:
+            target.active_buffs = []
+        else:
+            for i in range(self.buff_stole_per_turn):
+                random_buff_removed = choice(target.active_buffs)
+                target.active_buffs.remove(random_buff_removed)
+
+    @override
+    def attack(self, target: Character) -> int:
+        damage = self.base_damage
+        if randint(0, 1) == 1:
+            damage += self.bonus_damage
+        if randint(0, 100) < 20:
+            damage += self.bonus_damage
+        target.receive_damage(damage)
+        return damage
+
+
 
 
 
