@@ -156,6 +156,30 @@ class Witch(Monster):
             self.cast_poison(poison, target)
         return damage
 
+class Zombie(Monster):
+    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item], level: int):
+        super().__init__(name, hp, base_damage, bonus_damage, equipment, level)
+        self.__initial_hp = hp
+        self.can_revive = True
+
+    @property
+    def initial_hp(self):
+        return self.__initial_hp
+
+    def revive(self):
+        if self.hp == 0 and self.can_revive:
+            self.hp = self.initial_hp
+            self.can_revive = False
+
+    def receive_damage(self, damage: int) -> None:
+        if not isinstance(damage, int):
+            raise TypeError("Il danno deve essere un intero")
+        if damage < 0:
+            raise ValueError("Il danno deve essere maggiore di 0")
+        self.hp = max(0, self.hp - damage)
+        self.revive()
+
+
 
 
 
