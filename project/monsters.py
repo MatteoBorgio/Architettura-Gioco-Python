@@ -1,8 +1,8 @@
 from abc import ABC
 from random import choice, randint
-from typing import override
 
 from project.characters import Character
+from project.datatypes import Poison
 from project.items import Item
 from project.valid_slot import CHARACTER_SLOTS
 
@@ -118,7 +118,6 @@ class Goblin(Monster):
                 random_buff_removed = choice(target.active_buffs)
                 target.active_buffs.remove(random_buff_removed)
 
-    @override
     def attack(self, target: Character) -> int:
         damage = self.base_damage
         if randint(0, 1) == 1:
@@ -127,6 +126,36 @@ class Goblin(Monster):
             damage += self.bonus_damage
         target.receive_damage(damage)
         return damage
+
+class Witch(Monster):
+    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item], level: int, poisons: list[Poison]):
+        super().__init__(name, hp, base_damage, bonus_damage, equipment, level)
+        if not isinstance(poisons, list):
+            raise TypeError("I veleni devono essere rappresentati da una lista")
+        for element in poisons:
+            if not isinstance(element, Poison):
+                raise TypeError("I veleni devono essere istanze della classe Poison")
+        for poison in poisons:
+            poison.damage_per_turn *= level
+        self.poisons = poisons
+
+    def cast_poison(self, poison: Poison, target: Character):
+        if not isinstance(poison, Poison):
+            raise TypeError("Il veleno deve essere un'istanza della classe Poison")
+        if not isinstance(target, Character):
+            raise TypeError("Il target deve essere un'istanza di Character o di una sua sottoclasse")
+        target.add_poison(poison)
+        self.poisons.remove(poison)
+
+    def attack(self, target: Character) -> int:
+        damage = self.base_damage
+        if randint(0, 1) == 1:
+            damage += self.bonus_damage
+        if self.poisons:
+            poison = choice(self.poisons)
+            self.cast_poison(poison, target)
+        return damage
+
 
 
 

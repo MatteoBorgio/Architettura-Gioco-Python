@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from random import randint
-from typing import override
 
 from project.datatypes import Stats, Buff, Poison
 from project.errors import InvalidEquipError
@@ -264,7 +263,6 @@ class Warrior(Character):
     def shield(self):
         return self.__shield
 
-    @override
     def receive_damage(self, damage: int) -> None:
         if not isinstance(damage, int):
             raise TypeError("Il danno deve essere un intero")
