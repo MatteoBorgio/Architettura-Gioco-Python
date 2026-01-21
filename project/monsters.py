@@ -179,6 +179,39 @@ class Zombie(Monster):
         self.hp = max(0, self.hp - damage)
         self.revive()
 
+class Spider(Monster):
+    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item], level: int, poison: Poison):
+        super().__init__(name, hp, base_damage, bonus_damage, equipment, level)
+        if not isinstance(poison, Poison):
+            raise TypeError("Il veleno deve essere un'istanza di Poison")
+        poison.damage_per_turn *= level
+        poison.duration *= level
+        self.__poison = poison
+        self.can_use_potion = True
+
+    @property
+    def poison(self):
+        return self.poison
+
+    def cast_poison(self, poison: Poison, target: Character):
+        if not isinstance(poison, Poison):
+            raise TypeError("Il veleno deve essere un'istanza della classe Poison")
+        if not isinstance(target, Character):
+            raise TypeError("Il target deve essere un'istanza di Character o di una sua sottoclasse")
+        target.add_poison(poison)
+        self.can_use_potion = False
+
+    def attack(self, target: Character) -> int:
+        damage = self.base_damage
+        if randint(0, 1) == 1:
+            damage += self.bonus_damage
+        if randint(0, 100) < 40 and self.can_use_potion:
+            self.cast_poison(self.poison, target)
+        return damage
+
+
+
+
 
 
 
