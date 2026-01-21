@@ -1,6 +1,5 @@
 from abc import abstractmethod, ABC
 
-from project.characters import Character
 from project.datatypes import Buff
 
 class Potion(ABC):
@@ -42,7 +41,7 @@ class Potion(ABC):
         self.__uses = value
 
     @abstractmethod
-    def use(self, character: Character):
+    def use(self, character):
         pass
 
 class HealPotion(Potion):
@@ -58,7 +57,8 @@ class HealPotion(Potion):
     def healing_effect(self):
         return self.__healing_effect
 
-    def use(self, character: Character):
+    def use(self, character):
+        from characters import Character
         if not isinstance(character, Character):
             raise TypeError("Una pozione può essere utilizzata solo su un personaggio")
         character.hp = min(character.max_hp, (character.hp + self.healing_effect))
@@ -78,7 +78,8 @@ class BuffPotion(Potion):
     def buff(self):
         return self.__buff
 
-    def use(self, character: Character):
+    def use(self, character):
+        from characters import Character
         if not isinstance(character, Character):
             raise TypeError("Una pozione può essere utilizzata solo su un personaggio")
         try:
