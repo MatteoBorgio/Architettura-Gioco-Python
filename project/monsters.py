@@ -38,6 +38,7 @@ class Monster(ABC):
         self.level = level
         self.__name = name
         self.__hp = hp * level
+        self.__max_hp = hp
         self.__base_damage = base_damage * level
         self.__bonus_damage = bonus_damage * level
         self.__equipment = equipment
@@ -49,6 +50,10 @@ class Monster(ABC):
     @property
     def hp(self):
         return self.__hp
+
+    @property
+    def max_hp(self):
+        return self.__max_hp
 
     @hp.setter
     def hp(self, value: int):
