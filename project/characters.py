@@ -8,7 +8,7 @@ from project.potions import Potion
 from project.valid_slot import CHARACTER_SLOTS
 
 class Character(ABC):
-    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion]):
+    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], speed: int):
         if not isinstance(name, str):
             raise TypeError("Il nome deve essere una stringa")
         if name == "":
@@ -41,6 +41,10 @@ class Character(ABC):
         for element in potions_set:
             if not isinstance(element, Potion):
                 raise TypeError("Il set di pozioni deve essere composto da sottoclassi di Potion")
+        if not isinstance(speed, int):
+            raise TypeError("La velocità deve essere rappresentata da un intero")
+        if speed <= 0:
+            raise ValueError("La velocità deve essere maggiore di 0")
 
         self.__name = name
         self.__hp = hp
@@ -54,6 +58,7 @@ class Character(ABC):
         self.__special_ability_used = False
         self.__potions_set = potions_set
         self.active_poisons = []
+        self.__speed = speed
 
     @property
     def name(self):
@@ -126,6 +131,10 @@ class Character(ABC):
     @property
     def show_potions(self):
         return "{" + ", ".join(str(p) for p in self.__potions_set) + "}"
+
+    @property
+    def speed(self):
+        return self.__speed
 
     def equip(self, item: Item) -> None:
         if not isinstance(item, Item):
@@ -251,8 +260,8 @@ class Character(ABC):
         return f"{self.name} ({self.hp}/{self.max_hp})"
 
 class Warrior(Character):
-    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], shield: int):
-        super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability, potions_set)
+    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], shield: int, speed: int):
+        super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability, potions_set, speed)
         if not isinstance(shield, int):
             raise TypeError("Lo scudo deve essere rappresentato da un intero")
         if shield <= 0:
@@ -280,8 +289,8 @@ class Warrior(Character):
             return 0
 
 class Cleric(Character):
-    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], poisons_mitigation: int, healing_per_attack: int):
-        super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability, potions_set)
+    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], poisons_mitigation: int, healing_per_attack: int, speed: int):
+        super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability, potions_set, speed)
         if not isinstance(poisons_mitigation, int):
             raise TypeError("La mitigazione dei veleni deve essere rappresentata da un intero")
         if poisons_mitigation <= 0:
@@ -316,8 +325,8 @@ class Cleric(Character):
             return 0
 
 class Thief(Character):
-    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], critical_bonus: int):
-        super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability, potions_set)
+    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], critical_bonus: int, speed: int):
+        super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability, potions_set, speed)
         if not isinstance(critical_bonus, int):
             raise TypeError("I danni critici devono essere rappresentati da un intero")
         if critical_bonus <= 0:
@@ -340,8 +349,8 @@ class Thief(Character):
             return 0
 
 class Wizard(Character):
-    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], buff_amount_boost: int, buff_duration_boost: int):
-        super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability, potions_set)
+    def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], buff_amount_boost: int, buff_duration_boost: int, speed: int):
+        super().__init__(name, hp, base_stats, equipment, mana, mana_per_attack, special_ability, potions_set, speed)
         if not isinstance(buff_amount_boost, int):
             raise TypeError("Il boost della quantità del potenziamento deve essere rappresentato da un intero")
         if buff_amount_boost <= 0:

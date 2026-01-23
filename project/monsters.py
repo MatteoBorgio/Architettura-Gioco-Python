@@ -7,7 +7,7 @@ from project.items import Item
 from project.valid_slot import CHARACTER_SLOTS
 
 class Monster(ABC):
-    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item | None], level: int):
+    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item | None], level: int, speed: int):
         if not isinstance(name, str):
             raise TypeError("Il nome deve essere una stringa")
         if name == "":
@@ -35,6 +35,11 @@ class Monster(ABC):
             raise TypeError("Il livello deve essere rappresentato da un intero")
         if level <= 0:
             raise ValueError("Il livello deve essere maggiore di 0")
+        if not isinstance(speed, int):
+            raise TypeError("La velocità deve essere rappresentata da un intero")
+        if speed <= 0:
+            raise ValueError("La velocità deve essere maggiore di 0")
+
         self.level = level
         self.__name = name
         self.__hp = hp * level
@@ -42,6 +47,7 @@ class Monster(ABC):
         self.__base_damage = base_damage * level
         self.__bonus_damage = bonus_damage * level
         self.__equipment = equipment
+        self.__speed = speed
 
     @property
     def name(self):
@@ -75,6 +81,10 @@ class Monster(ABC):
     def equipment(self):
         return self.__equipment
 
+    @property
+    def speed(self):
+        return self.__speed
+
     def receive_damage(self, damage: int) -> None:
         if not isinstance(damage, int):
             raise TypeError("Il danno deve essere un intero")
@@ -101,8 +111,8 @@ class Monster(ABC):
         return damage
 
 class Goblin(Monster):
-    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item], buff_stole_per_turn: int, level: int):
-        super().__init__(name, hp, base_damage, bonus_damage, equipment, level)
+    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item], buff_stole_per_turn: int, level: int, speed: int):
+        super().__init__(name, hp, base_damage, bonus_damage, equipment, level, speed)
         if not isinstance(buff_stole_per_turn, int):
             raise TypeError("Il numero di buff da rimuovere per turno deve essere rappresentato da un intero")
         if buff_stole_per_turn <= 0:
@@ -133,8 +143,8 @@ class Goblin(Monster):
         return damage
 
 class Witch(Monster):
-    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item], level: int, poisons: list[Poison]):
-        super().__init__(name, hp, base_damage, bonus_damage, equipment, level)
+    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item], level: int, poisons: list[Poison], speed: int):
+        super().__init__(name, hp, base_damage, bonus_damage, equipment, level, speed)
         if not isinstance(poisons, list):
             raise TypeError("I veleni devono essere rappresentati da una lista")
         for element in poisons:
@@ -162,8 +172,8 @@ class Witch(Monster):
         return damage
 
 class Zombie(Monster):
-    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item], level: int):
-        super().__init__(name, hp, base_damage, bonus_damage, equipment, level)
+    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item], level: int, speed: int):
+        super().__init__(name, hp, base_damage, bonus_damage, equipment, level, speed)
         self.__initial_hp = hp
         self.can_revive = True
 
@@ -185,8 +195,8 @@ class Zombie(Monster):
         self.revive()
 
 class Spider(Monster):
-    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item], level: int, poison: Poison):
-        super().__init__(name, hp, base_damage, bonus_damage, equipment, level)
+    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item], level: int, poison: Poison, speed: int):
+        super().__init__(name, hp, base_damage, bonus_damage, equipment, level, speed)
         if not isinstance(poison, Poison):
             raise TypeError("Il veleno deve essere un'istanza di Poison")
         poison.damage_per_turn *= level
