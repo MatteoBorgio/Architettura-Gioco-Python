@@ -1,10 +1,5 @@
 import pygame
 from enum import Enum
-from pathlib import Path
-
-# ---------- UTILITY ----------
-def asset_path(*args):
-    return str(Path(__file__).parent.joinpath(*args))
 
 # ---------- STATI SPRITE ----------
 class SpriteState(Enum):
@@ -22,6 +17,7 @@ class CharacterSprite(pygame.sprite.Sprite):
     SPEED = 200
     ATTACK_DURATION = 1
     WALK_INTERVAL = 0.2
+    RETURN_INTERVAL = 1
 
     def __init__(self, model, x, y, frames: dict):
         super().__init__()
@@ -31,7 +27,7 @@ class CharacterSprite(pygame.sprite.Sprite):
         self.timer = 0
         self.walk_timer = 0
         self.walk_toggle = False
-        self.start_pos = (x, y)  # posizione originale
+        self.start_pos = (x, y)  
 
         # Caricamento immagini
         self.frames = {}
@@ -49,7 +45,7 @@ class CharacterSprite(pygame.sprite.Sprite):
 
     def _move_to_target(self, dt):
         dx = self.target.rect.centerx - self.rect.centerx
-        if abs(dx) > 40:
+        if abs(dx) > 100:
             direction = 1 if dx > 0 else -1
             self.rect.x += direction * self.SPEED * dt
             self.walk_timer += dt
@@ -65,21 +61,25 @@ class CharacterSprite(pygame.sprite.Sprite):
     def _attack(self, dt):
         self.timer += dt
         if self.timer >= self.ATTACK_DURATION:
+            if not hasattr(self, 'post_attack_timer'):
+                self.post_attack_timer = 0
+            self.post_attack_timer += dt
             if self.target:
                 self.model.attack(self.target.model)
-            self.state = SpriteState.RETURN
-            self.target = None
+                self.target = None
+            if self.post_attack_timer >= 1:
+                self.state = SpriteState.RETURN
+                self.post_attack_timer = 0
 
     def _return_to_start(self, dt):
-        dx = self.start_pos[0] - self.rect.centerx
-        if abs(dx) > 5:
-            direction = 1 if dx > 0 else -1
-            self.rect.x += direction * self.SPEED * dt
-            self.image = self.frames["walk_1"] if self.walk_toggle else self.frames["walk_2"]
-        else:
+        if not hasattr(self, 'return_timer'):
+            self.return_timer = 0
+        self.return_timer += dt
+        if self.return_timer >= self.RETURN_INTERVAL:
             self.rect.centerx = self.start_pos[0]
             self.state = SpriteState.IDLE
-            self.image = self.frames["idle"]
+            self.image = self.frames["idle"] if hasattr(self, "frames") else self.frames.get("idle", self.image)
+            self.return_timer = 0
 
     def draw_hp_bar(self, surface):
         ratio = self.model.hp / self.model.max_hp
@@ -108,6 +108,7 @@ class EnemySprite(pygame.sprite.Sprite):
     SPEED = 150
     ATTACK_DURATION = 1
     WALK_INTERVAL = 0.3
+    RETURN_INTERVAL = 1
 
     def __init__(self, model, x, y, frames: dict):
         super().__init__()
@@ -134,7 +135,7 @@ class EnemySprite(pygame.sprite.Sprite):
 
     def _move_to_target(self, dt):
         dx = self.target.rect.centerx - self.rect.centerx
-        if abs(dx) > 50:
+        if abs(dx) > 100:
             direction = 1 if dx > 0 else -1
             self.rect.x += direction * self.SPEED * dt
             self.walk_timer += dt
@@ -150,21 +151,25 @@ class EnemySprite(pygame.sprite.Sprite):
     def _attack_target(self, dt):
         self.timer += dt
         if self.timer >= self.ATTACK_DURATION:
+            if not hasattr(self, 'post_attack_timer'):
+                self.post_attack_timer = 0
+            self.post_attack_timer += dt
             if self.target and self.target.model.hp > 0:
                 self.model.attack(self.target.model)
-            self.state = SpriteState.RETURN
-            self.target = None
+                self.target = None
+            if self.post_attack_timer >= 1:
+                self.state = SpriteState.RETURN
+                self.post_attack_timer = 0
 
     def _return_to_start(self, dt):
-        dx = self.start_pos[0] - self.rect.centerx
-        if abs(dx) > 5:
-            direction = 1 if dx > 0 else -1
-            self.rect.x += direction * self.SPEED * dt
-            self.image = self.frames.get("walk_1") if self.walk_toggle else self.frames.get("walk_2")
-        else:
+        if not hasattr(self, 'return_timer'):
+            self.return_timer = 0
+        self.return_timer += dt
+        if self.return_timer >= self.RETURN_INTERVAL:
             self.rect.centerx = self.start_pos[0]
             self.state = SpriteState.IDLE
-            self.image = self.frames.get("idle", self.image)
+            self.image = self.frames["idle"] if hasattr(self, "frames") else self.frames.get("idle", self.image)
+            self.return_timer = 0
 
     def draw_hp_bar(self, surface):
         ratio = self.model.hp / self.model.max_hp

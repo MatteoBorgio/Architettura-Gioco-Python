@@ -1,23 +1,24 @@
 import os
+import sys
 import pygame
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from project.characters import Warrior
 from project.datatypes import Stats, Buff
 from project.monsters import Goblin
 from project.view import CharacterSprite, EnemySprite, SpriteState
 
-# ---------- FUNZIONE ASSET PATH ----------
 def asset_path(*args):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base_dir, *args)
 
-# ---------- INIZIALIZZAZIONE ----------
+# ---------- INIZIALIZZAZIONE GIOCO ----------
 pygame.init()
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Combattimento a turni")
 clock = pygame.time.Clock()
 
-# ---------- BACKGROUND ----------
+# ---------- CREAZIONE DEL BACKGROUND ----------
 bg = pygame.image.load(asset_path("..", "assets", "background.jpg")).convert()
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
 
@@ -64,6 +65,8 @@ all_sprites = pygame.sprite.Group(hero_sprite, enemy_sprite)
 
 # ---------- TURNO ----------
 turn = "player"
+enemy_attack_timer = 0
+player_has_attacked = False
 
 # ---------- LOOP PRINCIPALE ----------
 running = True
@@ -71,29 +74,36 @@ while running:
     dt = clock.tick(60) / 1000  # delta time in secondi
 
     # ---------- EVENTI ----------
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-        # ATTACCO PLAYER
         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-            if turn == "player" and hero.hp > 0 and goblin_model.hp > 0:
+            if turn == "player" and hero.hp > 0 and goblin_model.hp > 0 and not player_has_attacked:
                 hero_sprite.start_attack(enemy_sprite)
+                player_has_attacked = True
 
     # ---------- LOGICA TURNO ----------
     if turn == "player":
         hero_sprite.update(dt)
-        # Aspetta che il player torni alla posizione iniziale prima di passare turno
-        if hero_sprite.state == SpriteState.IDLE and hero_sprite.target is None:
+        if player_has_attacked and hero_sprite.state == SpriteState.IDLE and hero_sprite.target is None:
             turn = "enemy"
+            player_has_attacked = False
 
     elif turn == "enemy":
-        if enemy_sprite.state == SpriteState.IDLE and enemy_sprite.target is None:
-            enemy_sprite.set_target(hero_sprite)
         enemy_sprite.update(dt)
-        # Aspetta che il nemico torni alla posizione iniziale prima di passare turno
-        if enemy_sprite.state == SpriteState.IDLE and enemy_sprite.target is None:
+        if not hasattr(enemy_sprite, 'has_attacked'):
+            enemy_sprite.has_attacked = False
+        if not enemy_sprite.has_attacked and enemy_sprite.state == SpriteState.IDLE and enemy_sprite.target is None:
+            enemy_attack_timer += dt
+            if enemy_attack_timer >= 3:
+                enemy_sprite.set_target(hero_sprite)
+                enemy_sprite.has_attacked = True
+                enemy_attack_timer = 0
+        if enemy_sprite.state == SpriteState.IDLE and enemy_sprite.target is None and enemy_sprite.has_attacked:
             turn = "player"
+            enemy_sprite.has_attacked = False
 
     # ---------- RENDER ----------
     screen.blit(bg, (0, 0))
