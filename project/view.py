@@ -8,6 +8,43 @@ class SpriteState(Enum):
     ATTACK = "attack"
     RETURN = "return"
 
+class CharacterCard:
+    WIDTH = 220
+    HEIGHT = 300
+    PADDING = 12
+
+    def __init__(self, card_image_path: str, character_image_path: str, model, center_pos: tuple[int, int], font=None):
+        self.model = model
+        self.font = font
+
+        raw_card_image = pygame.image.load(card_image_path).convert_alpha()
+        self.card_image = pygame.transform.smoothscale(raw_card_image, (self.WIDTH, self.HEIGHT))
+        self.card_rect = self.card_image.get_rect(center=center_pos)
+
+        raw_character = pygame.image.load(character_image_path).convert_alpha()
+
+        max_width = self.WIDTH - self.PADDING * 2
+        max_height = self.HEIGHT - self.PADDING * 2
+
+        scale = min(max_width / raw_character.get_width(), max_height / raw_character.get_height())
+
+        new_size = (int(raw_character.get_width() * scale), int(raw_character.get_height() * scale))
+
+        self.character_image = pygame.transform.smoothscale(raw_character, new_size)
+
+        self.character_rect = self.character_image.get_rect(center=self.card_rect.center)
+
+    def draw(self, screen):
+        screen.blit(self.card_image, self.card_rect)
+        screen.blit(self.character_image, self.character_rect)
+        if self.font:
+            name_surface = self.font.render(self.model.name, True, (0, 0, 0))
+            name_rect = name_surface.get_rect(center=(self.card_rect.centerx, self.card_rect.top + 40))
+            screen.blit(name_surface, name_rect)
+
+    def is_clicked(self, mouse_pos):
+        return self.card_rect.collidepoint(mouse_pos)
+
 class BaseSprite(pygame.sprite.Sprite):
     BAR_WIDTH = 60
     BAR_HEIGHT = 8
@@ -101,4 +138,9 @@ class BaseSprite(pygame.sprite.Sprite):
 
         elif self.state == SpriteState.RETURN:
             self._return_to_start(delta_time)
+
+
+
+
+
 
