@@ -1,0 +1,84 @@
+[
+  {
+    "name": "High Septon",
+    "class": "Cleric",
+    "hp": 100,
+    "strength": 5,
+    "dexterity": 5,
+    "intelligence": 9,
+    "defense": 1,
+    "mana": 60,
+    "mana_per_attack": 4,
+    "special_ability": {
+        "name": "God Protection",
+        "stat": "defense",
+        "amount": 5,
+        "duration": 2
+    },
+    "potions_set": [],
+    "healing_per_attack": 5,
+    "poison_mitigation": 3,
+    "speed": 15
+  },
+  {
+    "name": "Eddard Stark",
+    "class": "Warrior",
+    "hp": 120,
+    "strength": 9,
+    "dexterity": 4,
+    "intelligence": 3,
+    "defense": 4,
+    "mana": 50,
+    "mana_per_attack": 5,
+    "special_ability": {
+        "name": "Warrior's Might",
+        "stat": "strength",
+        "amount": 3,
+        "duration": 2
+    },
+    "potions_set": [],
+    "shield": 5,
+    "speed": 20
+  },
+  {
+    "name": "Faceless",
+    "class": "Thief",
+    "hp": 80,
+    "strength": 4,
+    "dexterity": 9,
+    "intelligence": 6,
+    "defense": 1,
+    "mana": 30,
+    "mana_per_attack": 2,
+    "special_ability": {
+      "name": "Stealth Murder",
+      "stat": "dexterity",
+      "amount": 4,
+      "duration": 3
+    },
+    "potions_set": [],
+    "critical_bonus": 5,
+    "speed": 40
+  },
+  {
+    "name": "Melisandre",
+    "class": "Wizard",
+    "hp": 90,
+    "strength": 5,
+    "dexterity": 3,
+    "intelligence": 10,
+    "defense": 2,
+    "mana": 100,
+    "mana_per_attack": 5,
+    "special_ability": {
+      "name": "Dragon's Breath",
+      "stat": "intelligence",
+      "amount": 3,
+      "duration": 5
+    },
+    "potions_set": [],
+    "buff_amount_boost": 3,
+    "buff_duration_boost": 2,
+    "speed": 10
+  }
+]
