@@ -7,25 +7,28 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from project.characters import Warrior, Cleric, Thief, Wizard
 from project.datatypes import Stats, Buff
 from project.monsters import Goblin
-from project.view import BaseSprite, SpriteState, CharacterCard
+from project.view import BaseSprite, SpriteState, CharacterCard, InventoryCard
 from game_state import GameState
-
 
 # ---------- FUNZIONI UTILI ----------
 def asset_path(*args):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(base_dir, *args)
 
-
-def calculate_card_positions(screen_rect, num_cards, card_width, card_center_y):
+def calculate_characters_card_positions(screen_rect, num_cards: int, card_width: int, card_center_y: int):
     total_width = num_cards * card_width
     start_x = screen_rect.centerx - total_width / 2 + card_width / 2
     positions = [(start_x + i * card_width, card_center_y) for i in range(num_cards)]
     return positions
 
+def calculate_inventory_card_positions(screen_rect, card_width: int, card_height: int, bottom_margin=0, num_cards=5):
+    total_width = num_cards * card_width
+    start_x = screen_rect.centerx - total_width / 2 + card_width / 2
+    center_y = screen_rect.bottom - bottom_margin - card_height / 2
+    positions = [(start_x + i * card_width, center_y) for i in range(num_cards)]
+    return positions
 
 def create_character(data):
-    """Crea un'istanza di personaggio a partire dai dati JSON."""
     base_stats = Stats(
         strength=data.get("strength", 0),
         dexterity=data.get("dexterity", 0),
@@ -80,7 +83,6 @@ def create_character(data):
 
     return cls(**kwargs)
 
-
 # ---------- INIZIALIZZAZIONE PYGAME ----------
 pygame.init()
 WIDTH, HEIGHT = 800, 600
@@ -99,7 +101,6 @@ bg_selection = pygame.transform.scale(
 )
 
 screen_rect = screen.get_rect()
-card_width = 200
 card_center_y = screen_rect.centery + 50
 
 # ---------- CARICAMENTO JSON DEI PERSONAGGI ----------
@@ -108,19 +109,34 @@ with open(asset_path("..", "data", "characters.json")) as f:
 
 characters = [create_character(d) for d in character_data]
 
-# ---------- CREAZIONE CARD ----------
-positions = calculate_card_positions(screen_rect, len(characters), card_width, card_center_y)
+# ---------- CREAZIONE CARDS ----------
+characters_cards_positions = calculate_characters_card_positions(screen_rect, len(characters), CharacterCard.WIDTH, card_center_y)
 
-cards = []
+characters_cards = []
 for i, char in enumerate(characters):
-    card = CharacterCard(
-        card_image_path=asset_path("..", "assets", "wooden_board.png"),
-        character_image_path=asset_path("..", "assets", char.__class__.__name__.lower(), f"{char.__class__.__name__.lower()}_1.png"),
-        model=char,
-        center_pos=positions[i],
-        font=selection_font
+    character_card = CharacterCard(
+        asset_path("..", "assets", "wooden_board.png"),
+        asset_path("..", "assets", char.__class__.__name__.lower(), f"{char.__class__.__name__.lower()}_1.png"),
+        char,
+        characters_cards_positions[i],
+        selection_font
     )
-    cards.append(card)
+    characters_cards.append(character_card)
+
+
+cards_num = 5
+inventory_cards_positions = calculate_inventory_card_positions(screen_rect, InventoryCard.WIDTH, InventoryCard.HEIGHT)
+
+inventory_cards = []
+for i in range(cards_num):
+    inventory_card = InventoryCard(
+        asset_path("..", "assets", "wooden_board.png"),
+        None,
+        None,
+        inventory_cards_positions[i],
+        selection_font
+    )
+    inventory_cards.append(inventory_card)
 
 # ---------- CREAZIONE NEMICO ----------
 goblin_model = Goblin(name="Goblin", hp=50, base_damage=8, bonus_damage=4, equipment={}, buff_stole_per_turn=1, level=1,
@@ -163,9 +179,9 @@ while running:
             running = False
 
         if game_state == GameState.CHARACTER_SELECT and event.type == pygame.MOUSEBUTTONDOWN:
-            for card in cards:
-                if card.is_clicked(event.pos):
-                    selected_hero = card.model
+            for character_card in characters_cards:
+                if character_card.is_clicked(event.pos):
+                    selected_hero = character_card.model
                     frames = get_frames_for_character(selected_hero)
                     hero_sprite = BaseSprite(selected_hero, (200, 490), frames=frames)
                     all_sprites = pygame.sprite.Group(hero_sprite, enemy_sprite)
@@ -207,14 +223,16 @@ while running:
         text_surface = selection_font.render("SELECT YOUR CHARACTER:", True, (0, 0, 0))
         text_rect = text_surface.get_rect(center=(screen_rect.centerx, screen_rect.centery - 150))
         screen.blit(text_surface, text_rect)
-        for card in cards:
-            card.draw(screen)
+        for character_card in characters_cards:
+            character_card.draw(screen)
 
     elif game_state == GameState.BATTLE_MODE:
         screen.blit(bg, (0, 0))
         all_sprites.draw(screen)
         hero_sprite.draw_hp_bar(screen)
         enemy_sprite.draw_hp_bar(screen)
+        for inventory_card in inventory_cards:
+            inventory_card.draw(screen)
 
     pygame.display.flip()
 

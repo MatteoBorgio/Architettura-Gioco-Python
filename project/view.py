@@ -8,42 +8,71 @@ class SpriteState(Enum):
     ATTACK = "attack"
     RETURN = "return"
 
-class CharacterCard:
-    WIDTH = 220
-    HEIGHT = 300
-    PADDING = 12
+class Card:
+    WIDTH = 100
+    HEIGHT = 150
+    PADDING = 10
 
-    def __init__(self, card_image_path: str, character_image_path: str, model, center_pos: tuple[int, int], font=None):
+    def __init__(self, card_image_path: str, content_image_path: str | None, model, center_pos: tuple[int, int], font=None):
         self.model = model
         self.font = font
 
         raw_card_image = pygame.image.load(card_image_path).convert_alpha()
         self.card_image = pygame.transform.smoothscale(raw_card_image, (self.WIDTH, self.HEIGHT))
         self.card_rect = self.card_image.get_rect(center=center_pos)
+        self.content_image_path = content_image_path
 
-        raw_character = pygame.image.load(character_image_path).convert_alpha()
+        if self.content_image_path is not None:
+            raw_content_image = pygame.image.load(self.content_image_path).convert_alpha()
 
-        max_width = self.WIDTH - self.PADDING * 2
-        max_height = self.HEIGHT - self.PADDING * 2
+            max_width = self.WIDTH - self.PADDING * 2
+            max_height = self.HEIGHT - self.PADDING * 2
 
-        scale = min(max_width / raw_character.get_width(), max_height / raw_character.get_height())
+            scale = min(max_width / raw_content_image.get_width(), max_height / raw_content_image.get_height())
 
-        new_size = (int(raw_character.get_width() * scale), int(raw_character.get_height() * scale))
+            new_size = (int(raw_content_image.get_width() * scale), int(raw_content_image.get_height() * scale))
 
-        self.character_image = pygame.transform.smoothscale(raw_character, new_size)
+            self.content_image = pygame.transform.smoothscale(raw_content_image, new_size)
 
-        self.character_rect = self.character_image.get_rect(center=self.card_rect.center)
+            self.content_rect = self.content_image.get_rect(center=self.card_rect.center)
 
     def draw(self, screen):
+        font = pygame.font.Font(None, int(self.font.get_height() * 0.6))
         screen.blit(self.card_image, self.card_rect)
-        screen.blit(self.character_image, self.character_rect)
-        if self.font:
+        if self.content_image_path is not None:
+            screen.blit(self.content_image, self.content_rect)
+        if self.font and self.content_image_path is not None:
             name_surface = self.font.render(self.model.name, True, (0, 0, 0))
             name_rect = name_surface.get_rect(center=(self.card_rect.centerx, self.card_rect.top + 40))
             screen.blit(name_surface, name_rect)
 
+            class_name_text = self.model.__class__.__name__
+            class_name_surface = font.render(class_name_text, True, (0, 0, 0))
+            hp_rect = class_name_surface.get_rect(center=(self.card_rect.centerx, self.card_rect.top + 82))
+            screen.blit(class_name_surface, hp_rect)
+
+            hp_text = f"HP: {self.model.hp}"
+            hp_surface = font.render(hp_text, True, (0, 0, 0))
+            hp_rect = hp_surface.get_rect(center=(self.card_rect.centerx, self.card_rect.bottom - 42))
+            screen.blit(hp_surface, hp_rect)
+
+            mana_text = f"MANA: {self.model.mana}"
+            mana_surface = font.render(mana_text, True, (0, 0, 0))
+            mana_rect = mana_surface.get_rect(center=(self.card_rect.centerx, self.card_rect.bottom - 25))
+            screen.blit(mana_surface, mana_rect)
+
     def is_clicked(self, mouse_pos):
         return self.card_rect.collidepoint(mouse_pos)
+
+class CharacterCard(Card):
+    WIDTH = 200
+    HEIGHT = 300
+    PADDING = 12
+
+class InventoryCard(Card):
+    WIDTH = 80
+    HEIGHT = 110
+    PADDING = 8
 
 class BaseSprite(pygame.sprite.Sprite):
     BAR_WIDTH = 60
