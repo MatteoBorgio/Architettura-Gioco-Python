@@ -20,15 +20,13 @@ def asset_path(*args):
 def calculate_characters_card_positions(screen_rect, num_cards: int, card_width: int, card_center_y: int):
     total_width = num_cards * card_width
     start_x = screen_rect.centerx - total_width / 2 + card_width / 2
-    positions = [(start_x + i * card_width, card_center_y) for i in range(num_cards)]
-    return positions
+    return [(start_x + i * card_width, card_center_y) for i in range(num_cards)]
 
 def calculate_inventory_card_positions(screen_rect, card_width: int, card_height: int, bottom_margin=0, num_cards=5):
     total_width = num_cards * card_width
     start_x = screen_rect.centerx - total_width / 2 + card_width / 2
     center_y = screen_rect.bottom - bottom_margin - card_height / 2
-    positions = [(start_x + i * card_width, center_y) for i in range(num_cards)]
-    return positions
+    return [(start_x + i * card_width, center_y) for i in range(num_cards)]
 
 def create_character(data):
     base_stats = Stats(
@@ -46,13 +44,7 @@ def create_character(data):
         duration=sa.get("duration", 0)
     )
 
-    cls_map = {
-        "Warrior": Warrior,
-        "Cleric": Cleric,
-        "Thief": Thief,
-        "Wizard": Wizard
-    }
-
+    cls_map = {"Warrior": Warrior, "Cleric": Cleric, "Thief": Thief, "Wizard": Wizard}
     cls = cls_map.get(data["class"])
     if not cls:
         raise ValueError(f"Classe non riconosciuta: {data['class']}")
@@ -89,35 +81,35 @@ def create_weapon(data):
         intelligence=data.get("intelligence", 0),
         defense=data.get("defense", 0)
     )
-
-    kwargs = {
-        "name": data["name"],
-        "weight": data["weight"],
-        "base_stats": base_stats,
-        "damage_range": (data["damage_range_min"], data["damage_range_max"]),
-        "weapon_type": data["weapon_type"],
-        "slot": data["slot"]
-    }
-
-    return Weapon(**kwargs)
-
-def create_asset_card(model, image_path: str, name: str, possible_positions, font, occupied_positions):
-    position = None
-    for possible_position in possible_positions:
-        if possible_position not in occupied_positions:
-            position = possible_position
-
-    asset_card = InventoryCard(
-        asset_path("..", "assets", image_path),
-        asset_path("..", "assets", char.__class__.__name__.lower(), f"{name}.png"),
-        model,
-        position,
-        font
+    return Weapon(
+        name=data["name"],
+        weight=int(data["weight"]),
+        bonus_stats=base_stats,
+        damage_range=(data["damage_range_min"], data["damage_range_max"]),
+        weapon_type=data["weapon_type"],
+        slot=data["slot"]
     )
 
-    occupied_positions.append(position)
-
-    return asset_card
+# ---------- INVENTORY CARD UTILS ----------
+def update_inventory_cards(selected_hero):
+    for i, slot in enumerate(list(selected_hero.equipment.keys()) + [None]*5):
+        if i >= len(inventory_cards):
+            break
+        card = inventory_cards[i]
+        card.card_rect.center = inventory_cards_positions[i]
+        if slot is None or selected_hero.equipment.get(slot) is None:
+            card.model = None
+            card.asset_image_path = asset_path("..", "assets", "wooden_board.png")
+            card.item_image_path = None
+        else:
+            item = selected_hero.equipment[slot]
+            card.model = item
+            card.asset_image_path = asset_path("..", "assets", "wooden_board.png")
+            if slot == "weapon":
+                card.item_image_path = asset_path("..", "assets", "weapon", f"{item.name}.png")
+            elif slot == "armor":
+                card.item_image_path = asset_path("..", "assets", "armor", f"{item.name}.png")
+        card.load_images()
 
 # ---------- INIZIALIZZAZIONE PYGAME ----------
 pygame.init()
@@ -131,57 +123,50 @@ selection_font = pygame.font.Font(font_path, 36)
 
 bg = pygame.image.load(asset_path("..", "assets", "background.jpg")).convert()
 bg = pygame.transform.scale(bg, (WIDTH, HEIGHT))
-bg_selection = pygame.transform.scale(
-    pygame.image.load(asset_path("..", "assets", "menu_wooden_board.jpg")).convert(),
-    (WIDTH, HEIGHT)
-)
+bg_selection = pygame.image.load(asset_path("..", "assets", "menu_wooden_board.jpg")).convert()
+bg_selection = pygame.transform.scale(bg_selection, (WIDTH, HEIGHT))
 
 screen_rect = screen.get_rect()
 card_center_y = screen_rect.centery + 50
 
-# ---------- CARICAMENTO JSON DELLE RISORSE NECESSARIE ----------
+# ---------- CARICAMENTO JSON ----------
 with open(asset_path("..", "data", "characters.json")) as f:
     characters_data = json.load(f)
-
 characters = [create_character(d) for d in characters_data]
 
-with open(asset_path("..", "data", "weapon")) as f:
+with open(asset_path("..", "data", "weapons.json")) as f:
     weapons_data = json.load(f)
-
 weapons = [create_weapon(d) for d in weapons_data]
 
-# ---------- CREAZIONE CARDS ----------
-characters_cards_positions = calculate_characters_card_positions(screen_rect, len(characters), CharacterCard.WIDTH, card_center_y)
+# Assegna Long Sword ai Warrior
+for char in characters:
+    if isinstance(char, Warrior):
+        for w in weapons:
+            if w.name == "Long Sword":
+                char.equipment["weapon"] = w
+                break
 
-characters_cards = []
-for i, char in enumerate(characters):
-    character_card = CharacterCard(
+# ---------- CARDS ----------
+characters_cards_positions = calculate_characters_card_positions(screen_rect, len(characters), CharacterCard.WIDTH, card_center_y)
+characters_cards = [
+    CharacterCard(
         asset_path("..", "assets", "wooden_board.png"),
         asset_path("..", "assets", char.__class__.__name__.lower(), f"{char.__class__.__name__.lower()}_1.png"),
         char,
         characters_cards_positions[i],
         selection_font
-    )
-    characters_cards.append(character_card)
+    ) for i, char in enumerate(characters)
+]
 
 cards_num = 5
 inventory_cards_positions = calculate_inventory_card_positions(screen_rect, InventoryCard.WIDTH, InventoryCard.HEIGHT)
-inventory_cards_occupied_positions = []
+inventory_cards = [
+    InventoryCard(asset_path("..", "assets", "wooden_board.png"), None, None, inventory_cards_positions[i], selection_font)
+    for i in range(cards_num)
+]
 
-inventory_cards = []
-for i in range(cards_num):
-    inventory_card = InventoryCard(
-        asset_path("..", "assets", "wooden_board.png"),
-        None,
-        None,
-        inventory_cards_positions[i],
-        selection_font
-    )
-    inventory_cards.append(inventory_card)
-
-# ---------- CREAZIONE NEMICO ----------
-goblin_model = Goblin(name="Goblin", hp=50, base_damage=8, bonus_damage=4, equipment={}, buff_stole_per_turn=1, level=1,
-                      speed=20)
+# ---------- NEMICO ----------
+goblin_model = Goblin(name="Goblin", hp=50, base_damage=8, bonus_damage=4, equipment={}, buff_stole_per_turn=1, level=1, speed=20)
 enemy_sprite = BaseSprite(goblin_model, (600, 500), frames={
     "idle": asset_path("..", "assets", "goblin", "goblin_1.png"),
     "walk_1": asset_path("..", "assets", "goblin", "goblin_2.png"),
@@ -196,7 +181,7 @@ all_sprites = pygame.sprite.Group()
 turn = "player"
 enemy_attack_timer = 0
 player_has_attacked = False
-
+inventory_changed = True
 
 # ---------- FUNZIONE PER I FRAMES DELLO SPRITE ----------
 def get_frames_for_character(char):
@@ -207,7 +192,6 @@ def get_frames_for_character(char):
         "walk_2": asset_path("..", "assets", folder, f"{folder}_3.png"),
         "attack": asset_path("..", "assets", folder, f"{folder}_4.png")
     }
-
 
 # ---------- MAIN LOOP ----------
 running = True
@@ -230,6 +214,7 @@ while running:
                     turn = "player"
                     player_has_attacked = False
                     enemy_attack_timer = 0
+                    inventory_changed = True
 
         elif game_state == GameState.BATTLE_MODE and event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
             if turn == "player" and hero_sprite.model.hp > 0 and goblin_model.hp > 0 and not player_has_attacked:
@@ -272,8 +257,11 @@ while running:
         all_sprites.draw(screen)
         hero_sprite.draw_hp_bar(screen)
         enemy_sprite.draw_hp_bar(screen)
-        for inventory_card in inventory_cards:
-            inventory_card.draw(screen)
+        if inventory_changed:
+            update_inventory_cards(selected_hero)
+            inventory_changed = False
+        for card in inventory_cards:
+            card.draw(screen)
 
     pygame.display.flip()
 

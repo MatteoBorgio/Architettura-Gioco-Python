@@ -76,6 +76,33 @@ class InventoryCard(Card):
     HEIGHT = 110
     PADDING = 8
 
+    def __init__(self, card_image_path, asset_image_path, model, center_pos, font=None):
+        super().__init__(card_image_path, None, model, center_pos, font)
+        self.asset_image_path = asset_image_path
+        self.item_image_path = None
+        self.asset_image = None
+        self.item_image = None
+        self.asset_rect = None
+        self.item_rect = None
+        self.load_images()
+
+    def load_images(self):
+        if self.asset_image_path:
+            raw_asset = pygame.image.load(self.asset_image_path).convert_alpha()
+            self.asset_image = pygame.transform.smoothscale(raw_asset, (self.WIDTH, self.HEIGHT))
+            self.asset_rect = self.asset_image.get_rect(center=self.card_rect.center)
+
+        if self.item_image_path:
+            raw_item = pygame.image.load(self.item_image_path).convert_alpha()
+            self.item_image = pygame.transform.smoothscale(raw_item, (self.WIDTH, self.HEIGHT))
+            self.item_rect = self.item_image.get_rect(center=self.card_rect.center)
+
+    def draw(self, screen):
+        if self.asset_image:
+            screen.blit(self.asset_image, self.asset_rect)
+        if self.item_image:
+            screen.blit(self.item_image, self.item_rect)
+
 class BaseSprite(pygame.sprite.Sprite):
     BAR_WIDTH = 60
     BAR_HEIGHT = 8
