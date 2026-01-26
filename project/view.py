@@ -51,15 +51,17 @@ class Card:
             hp_rect = class_name_surface.get_rect(center=(self.card_rect.centerx, self.card_rect.top + 82))
             screen.blit(class_name_surface, hp_rect)
 
-            hp_text = f"HP: {self.model.hp}"
-            hp_surface = font.render(hp_text, True, (0, 0, 0))
-            hp_rect = hp_surface.get_rect(center=(self.card_rect.centerx, self.card_rect.bottom - 42))
-            screen.blit(hp_surface, hp_rect)
+            if hasattr(self.model, "hp"):
+                hp_text = f"HP: {self.model.hp}"
+                hp_surface = font.render(hp_text, True, (0, 0, 0))
+                hp_rect = hp_surface.get_rect(center=(self.card_rect.centerx, self.card_rect.bottom - 42))
+                screen.blit(hp_surface, hp_rect)
 
-            mana_text = f"MANA: {self.model.mana}"
-            mana_surface = font.render(mana_text, True, (0, 0, 0))
-            mana_rect = mana_surface.get_rect(center=(self.card_rect.centerx, self.card_rect.bottom - 25))
-            screen.blit(mana_surface, mana_rect)
+            if hasattr(self.model, "mana"):
+                mana_text = f"MANA: {self.model.mana}"
+                mana_surface = font.render(mana_text, True, (0, 0, 0))
+                mana_rect = mana_surface.get_rect(center=(self.card_rect.centerx, self.card_rect.bottom - 25))
+                screen.blit(mana_surface, mana_rect)
 
     def is_clicked(self, mouse_pos):
         return self.card_rect.collidepoint(mouse_pos)

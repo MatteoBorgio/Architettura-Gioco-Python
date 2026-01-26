@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Long Sword",
+    "weight": "2",
+    "strength": 5,
+    "dexterity": 0,
+    "intelligence": 0,
+    "defense": 1,
+    "damage_range_min": 3,
+    "damage_range_max": 5,
+    "weapon_type": "melee",
+    "slot": "weapon"
+  }
+]

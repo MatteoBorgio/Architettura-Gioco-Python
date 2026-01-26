@@ -3,6 +3,8 @@ import sys
 import pygame
 import json
 
+from project.items import Weapon
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from project.characters import Warrior, Cleric, Thief, Wizard
 from project.datatypes import Stats, Buff
@@ -36,7 +38,6 @@ def create_character(data):
         defense=data.get("defense", 0)
     )
 
-    # Creo la special ability
     sa = data.get("special_ability", {})
     special_ability = Buff(
         name=sa.get("name", ""),
@@ -56,7 +57,6 @@ def create_character(data):
     if not cls:
         raise ValueError(f"Classe non riconosciuta: {data['class']}")
 
-    # Parametri comuni
     kwargs = {
         "name": data["name"],
         "hp": data["hp"],
@@ -69,7 +69,6 @@ def create_character(data):
         "potions_set": data["potions_set"]
     }
 
-    # Parametri specifici per classe
     if cls is Warrior:
         kwargs["shield"] = data.get("shield", 0)
     elif cls is Cleric:
@@ -82,6 +81,43 @@ def create_character(data):
         kwargs["buff_duration_boost"] = data.get("buff_duration_boost", 0)
 
     return cls(**kwargs)
+
+def create_weapon(data):
+    base_stats = Stats(
+        strength=data.get("strength", 0),
+        dexterity=data.get("dexterity", 0),
+        intelligence=data.get("intelligence", 0),
+        defense=data.get("defense", 0)
+    )
+
+    kwargs = {
+        "name": data["name"],
+        "weight": data["weight"],
+        "base_stats": base_stats,
+        "damage_range": (data["damage_range_min"], data["damage_range_max"]),
+        "weapon_type": data["weapon_type"],
+        "slot": data["slot"]
+    }
+
+    return Weapon(**kwargs)
+
+def create_asset_card(model, image_path: str, name: str, possible_positions, font, occupied_positions):
+    position = None
+    for possible_position in possible_positions:
+        if possible_position not in occupied_positions:
+            position = possible_position
+
+    asset_card = InventoryCard(
+        asset_path("..", "assets", image_path),
+        asset_path("..", "assets", char.__class__.__name__.lower(), f"{name}.png"),
+        model,
+        position,
+        font
+    )
+
+    occupied_positions.append(position)
+
+    return asset_card
 
 # ---------- INIZIALIZZAZIONE PYGAME ----------
 pygame.init()
@@ -103,11 +139,16 @@ bg_selection = pygame.transform.scale(
 screen_rect = screen.get_rect()
 card_center_y = screen_rect.centery + 50
 
-# ---------- CARICAMENTO JSON DEI PERSONAGGI ----------
+# ---------- CARICAMENTO JSON DELLE RISORSE NECESSARIE ----------
 with open(asset_path("..", "data", "characters.json")) as f:
-    character_data = json.load(f)
+    characters_data = json.load(f)
 
-characters = [create_character(d) for d in character_data]
+characters = [create_character(d) for d in characters_data]
+
+with open(asset_path("..", "data", "weapon")) as f:
+    weapons_data = json.load(f)
+
+weapons = [create_weapon(d) for d in weapons_data]
 
 # ---------- CREAZIONE CARDS ----------
 characters_cards_positions = calculate_characters_card_positions(screen_rect, len(characters), CharacterCard.WIDTH, card_center_y)
@@ -123,9 +164,9 @@ for i, char in enumerate(characters):
     )
     characters_cards.append(character_card)
 
-
 cards_num = 5
 inventory_cards_positions = calculate_inventory_card_positions(screen_rect, InventoryCard.WIDTH, InventoryCard.HEIGHT)
+inventory_cards_occupied_positions = []
 
 inventory_cards = []
 for i in range(cards_num):
