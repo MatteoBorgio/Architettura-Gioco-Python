@@ -269,7 +269,6 @@ class GameController:
                         self.enemy_attack_timer = 0
                         self.inventory_changed = True
 
-
             elif self.game_state == GameState.BATTLE_MODE and event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     if self.turn == "player" and not self.player_has_attacked:
