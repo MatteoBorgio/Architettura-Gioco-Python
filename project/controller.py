@@ -9,9 +9,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from project.characters import Warrior, Cleric, Thief, Wizard
 from project.datatypes import Stats, Buff
 from project.monsters import Goblin
-from project.view import BaseSprite, SpriteState, CharacterCard, InventoryCard
+from project.view import BaseSprite, SpriteState, CharacterCard, InventoryCard, ProjectileSprite
 from game_state import GameState
-
 
 class GameController:
 
@@ -30,6 +29,7 @@ class GameController:
         self.enemy_attack_timer = 0
         self.player_has_attacked = False
         self.inventory_changed = True
+        self.projectiles = None
 
         self.font_path = self.asset_path("..", "assets", "font", "selection_font.ttf")
         self.selection_font = pygame.font.Font(self.font_path, 36)
@@ -136,6 +136,10 @@ class GameController:
             weapons_data = json.load(f)
         self.weapons = [self.create_weapon(d) for d in weapons_data]
 
+        with open(self.asset_path("..", "data", "projectiles.json")) as f:
+            projectiles_data = json.load(f)
+        self.projectiles = projectiles_data
+
         for char in self.characters:
             if isinstance(char, Warrior):
                 for w in self.weapons:
@@ -157,6 +161,13 @@ class GameController:
                     if w.name == "Scepter":
                         char.equipment["weapon"] = w
                         break
+
+    def assign_projectile(self, weapon):
+        if weapon.weapon_type == "ranged":
+            for projectile in self.projectiles:
+                if projectile["weapon"] == weapon.name:
+                    self.projectiles = projectile
+                    break
 
     def create_cards(self):
         positions = self.calculate_characters_card_positions(
@@ -240,14 +251,6 @@ class GameController:
                     card.item_image_path = self.asset_path("..", "assets", "armor", f"{item.name}.png")
             card.load_images()
 
-    def run(self):
-        while self.running:
-            dt = self.clock.tick(60) / 1000
-            self.handle_events()
-            self.update(dt)
-            self.render()
-        pygame.quit()
-
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -266,35 +269,52 @@ class GameController:
                         self.enemy_attack_timer = 0
                         self.inventory_changed = True
 
+
             elif self.game_state == GameState.BATTLE_MODE and event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    if (self.turn == "player"
-                        and self.hero_sprite.model.hp > 0
-                        and self.goblin_model.hp > 0
-                        and not self.player_has_attacked):
-                        self.hero_sprite.start_attack(self.enemy_sprite)
+                    if self.turn == "player" and not self.player_has_attacked:
+                        weapon = self.selected_hero.equipment.get("weapon")
+                        proj_info = None
+                        if weapon and weapon.weapon_type == "ranged":
+                            for p in self.projectiles:
+                                if p["weapon"] == weapon.name:
+                                    proj_info = {
+                                        "name": p["projectile_type"],
+                                        "speed": p["speed"]
+                                    }
+                                    break
+                        self.hero_sprite.start_attack(
+                            self.enemy_sprite,
+                            projectile_data=proj_info,
+                            group=self.all_sprites
+                        )
                         self.player_has_attacked = True
 
     # ---------- LOGICA ----------
     def update(self, dt):
         if self.game_state == GameState.BATTLE_MODE:
+            self.all_sprites.update(dt)
+
             if self.turn == "player":
-                self.hero_sprite.update(dt)
-                if self.player_has_attacked and self.hero_sprite.state == SpriteState.IDLE and self.hero_sprite.target is None:
-                    self.turn = "enemy"
-                    self.player_has_attacked = False
+                projectiles_in_flight = any(isinstance(s, ProjectileSprite) for s in self.all_sprites)
+
+                if self.player_has_attacked and not projectiles_in_flight:
+                    if self.hero_sprite.state == SpriteState.IDLE:
+                        self.turn = "enemy"
+                        self.player_has_attacked = False
+                        self.enemy_attack_timer = 0
 
             elif self.turn == "enemy":
-                self.enemy_sprite.update(dt)
                 if not hasattr(self.enemy_sprite, 'has_attacked'):
                     self.enemy_sprite.has_attacked = False
-                if not self.enemy_sprite.has_attacked and self.enemy_sprite.state == SpriteState.IDLE and self.enemy_sprite.target is None:
+
+                if not self.enemy_sprite.has_attacked:
                     self.enemy_attack_timer += dt
-                    if self.enemy_attack_timer >= 2:
+                    if self.enemy_attack_timer >= 1.5:
                         self.enemy_sprite.start_attack(self.hero_sprite)
                         self.enemy_sprite.has_attacked = True
-                        self.enemy_attack_timer = 0
-                if self.enemy_sprite.state == SpriteState.IDLE and self.enemy_sprite.target is None and self.enemy_sprite.has_attacked:
+
+                if self.enemy_sprite.has_attacked and self.enemy_sprite.state == SpriteState.IDLE:
                     self.turn = "player"
                     self.enemy_sprite.has_attacked = False
 
@@ -325,6 +345,14 @@ class GameController:
                 card.draw(self.screen)
 
         pygame.display.flip()
+
+    def run(self):
+        while self.running:
+            dt = self.clock.tick(60) / 1000
+            self.handle_events()
+            self.update(dt)
+            self.render()
+        pygame.quit()
 
 if __name__ == "__main__":
     controller = GameController()

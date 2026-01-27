@@ -1,3 +1,5 @@
+import math
+
 import pygame
 from enum import Enum
 
@@ -103,6 +105,40 @@ class InventoryCard(Card):
         if self.item_image:
             screen.blit(self.item_image, self.item_rect)
 
+class ProjectileSprite(pygame.sprite.Sprite):
+    SIZE_X = 90
+    SIZE_Y = 90
+
+    def __init__(self, image_name: str, start_pos: tuple, target_sprite, speed: int):
+        super().__init__()
+        self.target_sprite = target_sprite
+        self.image = pygame.image.load(f"../assets/projectile/{image_name}.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (self.SIZE_X, self.SIZE_Y))
+        self.current_x, self.current_y = float(start_pos[0]), float(start_pos[1])
+
+        tx, ty = target_sprite.rect.center
+        dx = tx - self.current_x
+        dy = ty - self.current_y
+        dist = math.sqrt(dx ** 2 + dy ** 2)
+
+        self.dir_x = dx / dist if dist != 0 else 0
+        self.dir_y = dy / dist if dist != 0 else 0
+        self.speed = speed
+
+        angle = math.degrees(math.atan2(-self.dir_y, self.dir_x))
+        self.image = pygame.transform.rotate(self.image, angle)
+
+        self.rect = self.image.get_rect(center=(int(self.current_x), int(self.current_y)))
+
+    def update(self, dt):
+        self.current_x += self.dir_x * self.speed * dt
+        self.current_y += self.dir_y * self.speed * dt
+
+        self.rect.center = (int(self.current_x), int(self.current_y))
+
+        if self.rect.colliderect(self.target_sprite.rect):
+            self.kill()
+
 class BaseSprite(pygame.sprite.Sprite):
     BAR_WIDTH = 60
     BAR_HEIGHT = 8
@@ -119,6 +155,7 @@ class BaseSprite(pygame.sprite.Sprite):
 
     def __init__(self, model, coordinates: tuple[int, int], frames: dict):
         super().__init__()
+        self.is_ranged_attack = False
         self.model = model
         self.SPEED = self.model.speed * 10
         self.state = SpriteState.IDLE
@@ -138,10 +175,16 @@ class BaseSprite(pygame.sprite.Sprite):
         self.image = self.frames["idle"]
         self.rect = self.image.get_rect(midbottom=self.start_position)
 
-    def start_attack(self, target):
+    def start_attack(self, target, projectile_data=None, group=None):
         self.target = target
         self.state = SpriteState.MOVE_TO_TARGET
         self.timer = 0
+
+        if projectile_data:
+            self.is_ranged_attack = True
+            self.launch_projectile(target, projectile_data['name'], projectile_data['speed'], group)
+        else:
+            self.is_ranged_attack = False
 
     def _move_to_target(self, delta_time):
         distance = self.target.rect.centerx - self.rect.centerx
@@ -158,6 +201,20 @@ class BaseSprite(pygame.sprite.Sprite):
             self.state = SpriteState.ATTACK
             self.timer = 0
             self.image = self.frames["attack"]
+
+    def launch_projectile(self, target_sprite, projectile_name, speed, group):
+        start_pos = self.rect.center
+
+        projectile = ProjectileSprite(
+            image_name=projectile_name,
+            start_pos=start_pos,
+            target_sprite=target_sprite,
+            speed=speed
+        )
+
+        self.image = self.frames["attack"]
+
+        group.add(projectile)
 
     def _return_to_start(self, delta_time):
         self.return_timer += delta_time
@@ -190,14 +247,17 @@ class BaseSprite(pygame.sprite.Sprite):
             self.image = self.frames["idle"]
 
         elif self.state == SpriteState.MOVE_TO_TARGET:
-            self._move_to_target(delta_time)
+            if self.is_ranged_attack:
+                self.state = SpriteState.ATTACK
+            else:
+                self._move_to_target(delta_time)
 
         elif self.state == SpriteState.ATTACK:
             self._attack(delta_time)
 
         elif self.state == SpriteState.RETURN:
             self._return_to_start(delta_time)
-
+            self.is_ranged_attack = False
 
 
 
