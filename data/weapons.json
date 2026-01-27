@@ -10,5 +10,17 @@
     "damage_range_max": 5,
     "weapon_type": "melee",
     "slot": "weapon"
+  },
+  {
+    "name": "Dagger",
+    "weight": "1",
+    "strength": 1,
+    "dexterity": 3,
+    "intelligence": 0,
+    "defense": 1,
+    "damage_range_min": 2,
+    "damage_range_max": 7,
+    "weapon_type": "melee",
+    "slot": "weapon"
   }
 ]
