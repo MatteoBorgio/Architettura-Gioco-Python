@@ -147,6 +147,16 @@ class GameController:
                     if w.name == "Dagger":
                         char.equipment["weapon"] = w
                         break
+            if isinstance(char, Cleric):
+                for w in self.weapons:
+                    if w.name == "Holy Spear":
+                        char.equipment["weapon"] = w
+                        break
+            if isinstance(char, Wizard):
+                for w in self.weapons:
+                    if w.name == "Scepter":
+                        char.equipment["weapon"] = w
+                        break
 
     def create_cards(self):
         positions = self.calculate_characters_card_positions(

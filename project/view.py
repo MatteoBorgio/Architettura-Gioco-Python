@@ -125,6 +125,7 @@ class BaseSprite(pygame.sprite.Sprite):
         self.target = None
         self.timer = 0
         self.walk_timer = 0
+        self.reach_timer = 0
         self.return_timer = 0
         self.walk_toggle = False
         self.start_position = coordinates

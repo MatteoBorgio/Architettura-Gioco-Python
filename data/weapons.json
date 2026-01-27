@@ -22,5 +22,29 @@
     "damage_range_max": 7,
     "weapon_type": "melee",
     "slot": "weapon"
+  },
+  {
+    "name": "Holy Spear",
+    "weight": "2",
+    "strength": 1,
+    "dexterity": 0,
+    "intelligence": 3,
+    "defense": 3,
+    "damage_range_min": 1,
+    "damage_range_max": 4,
+    "weapon_type": "melee",
+    "slot": "weapon"
+  },
+      {
+    "name": "Scepter",
+    "weight": "1",
+    "strength": 0,
+    "dexterity": 1,
+    "intelligence": 4,
+    "defense": 0,
+    "damage_range_min": 3,
+    "damage_range_max": 6,
+    "weapon_type": "ranged",
+    "slot": "weapon"
   }
 ]
