@@ -185,6 +185,9 @@ class BaseSprite(pygame.sprite.Sprite):
 
     def __init__(self, model, coordinates: tuple[int, int], frames: dict):
         super().__init__()
+        if model.name == "Troll":
+            self.SIZE_X *= 1.5
+            self.SIZE_Y *= 1.5
         self.is_ranged_attack = False
         self.model = model
         self.SPEED = self.model.speed * 10

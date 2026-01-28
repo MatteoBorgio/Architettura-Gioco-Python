@@ -1,11 +1,13 @@
 import os
+from random import randint
+
 import pygame
 import json
 
 from items import Weapon
 from characters import Warrior, Cleric, Thief, Wizard
 from datatypes import Stats, Buff
-from monsters import Goblin
+from monsters import Goblin, Witch, Spider, Zombie, Troll
 from view import BaseSprite, SpriteState, CharacterCard, InventoryCard, ProjectileSprite
 from game_state import GameState
 
@@ -45,7 +47,6 @@ class GameController:
 
         self.load_data()
         self.create_cards()
-        self.create_enemy()
 
     @staticmethod
     def asset_path(*args):
@@ -127,7 +128,7 @@ class GameController:
 
     @staticmethod
     def create_monster(data):
-        cls_map = {"Goblin": Goblin, "Cleric": Cleric, "Thief": Thief, "Wizard": Wizard}
+        cls_map = {"Goblin": Goblin, "Witch": Witch, "Spider": Spider, "Zombie": Zombie, "Troll": Troll}
         cls = cls_map.get(data["class"])
 
         kwargs = {
@@ -135,8 +136,17 @@ class GameController:
             "hp": data["hp"],
             "base_damage": data["base_damage"],
             "bonus_damage": data["bonus_damage"],
-            "speed": data["speed"]
+            "speed": data["speed"],
+            "equipment": {"weapon": None, "armor": None},
+            "level": 1
         }
+
+        if cls is Goblin:
+            kwargs["buff_stole_per_turn"] = data["buff_stole_per_turn"]
+        elif cls is Troll:
+            kwargs["brute_force"] = data["brute_force"]
+
+        return cls(**kwargs)
 
     def load_data(self):
         with open(self.asset_path("..", "data", "characters.json")) as f:
@@ -150,6 +160,10 @@ class GameController:
         with open(self.asset_path("..", "data", "projectiles.json")) as f:
             projectiles_data = json.load(f)
         self.projectile = projectiles_data
+
+        with open(self.asset_path("..", "data", "monsters.json")) as f:
+            monsters_data = json.load(f)
+        self.monsters = [self.create_monster(d) for d in monsters_data]
 
         for char in self.characters:
             if isinstance(char, Warrior):
@@ -211,28 +225,19 @@ class GameController:
             for i in range(5)
         ]
 
-    def create_enemy(self):
-        self.goblin_model = Goblin(
-            name="Goblin",
-            hp=50,
-            base_damage=8,
-            bonus_damage=4,
-            equipment={},
-            buff_stole_per_turn=1,
-            level=1,
-            speed=20
+    def create_enemy(self, model, frames):
+        self.enemy_sprite = BaseSprite(
+            model,
+            (600, 500),
+            frames
         )
 
-        self.enemy_sprite = BaseSprite(
-            self.goblin_model,
-            (600, 500),
-            frames={
-                "idle": self.asset_path("..", "assets", "goblin", "goblin_1.png"),
-                "walk_1": self.asset_path("..", "assets", "goblin", "goblin_2.png"),
-                "walk_2": self.asset_path("..", "assets", "goblin", "goblin_3.png"),
-                "attack": self.asset_path("..", "assets", "goblin", "goblin_4.png")
-            }
-        )
+    # da sistemare
+    def choose_enemy(self):
+        if randint(0, 1) == 1:
+            self.create_enemy(self.monsters[0], self.get_frames_for_character(self.monsters[0]))
+        else:
+            self.create_enemy(self.monsters[1], self.get_frames_for_character(self.monsters[1]))
 
     def get_frames_for_character(self, char):
         folder = char.__class__.__name__.lower()
@@ -271,6 +276,7 @@ class GameController:
             if self.game_state == GameState.CHARACTER_SELECT and event.type == pygame.MOUSEBUTTONDOWN:
                 for character_card in self.characters_cards:
                     if character_card.is_clicked(event.pos):
+                        self.choose_enemy()
                         self.selected_hero = character_card.model
                         frames = self.get_frames_for_character(self.selected_hero)
                         self.hero_sprite = BaseSprite(self.selected_hero, (200, 490), frames)
@@ -331,7 +337,7 @@ class GameController:
                     self.turn = "player"
                     self.enemy_sprite.has_attacked = False
 
-            if self.hero_sprite.model.hp <= 0 or self.goblin_model.hp <= 0:
+            if self.hero_sprite.model.hp <= 0 or self.enemy_sprite.model.hp <= 0:
                 self.running = False
 
     # ---------- RENDER ----------
