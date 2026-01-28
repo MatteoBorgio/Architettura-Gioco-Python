@@ -286,7 +286,7 @@ class GameController:
                             self.enemy_sprite,
                             projectile_data=proj_info,
                             group=self.all_sprites,
-                            effect_name=proj_info["effect"]
+                            effect_name=proj_info["effect"] if proj_info else None
                         )
                         self.player_has_attacked = True
 
