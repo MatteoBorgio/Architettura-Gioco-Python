@@ -1,0 +1,19 @@
+[
+  {
+    "name": "Goblin",
+    "class": "Goblin",
+    "hp": 50,
+    "base_damage": 5,
+    "bonus_damage": 5,
+    "speed": 100,
+    "buff_stole_per_turn": 1
+  },
+  {
+    "name": "Troll",
+    "class": "Troll",
+    "hp": 100,
+    "base_damage": 10,
+    "bonus_damage": 2,
+    "speed": 50
+  }
+]

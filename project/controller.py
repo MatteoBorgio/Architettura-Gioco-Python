@@ -125,6 +125,19 @@ class GameController:
             slot=data["slot"]
         )
 
+    @staticmethod
+    def create_monster(data):
+        cls_map = {"Goblin": Goblin, "Cleric": Cleric, "Thief": Thief, "Wizard": Wizard}
+        cls = cls_map.get(data["class"])
+
+        kwargs = {
+            "name": data["name"],
+            "hp": data["hp"],
+            "base_damage": data["base_damage"],
+            "bonus_damage": data["bonus_damage"],
+            "speed": data["speed"]
+        }
+
     def load_data(self):
         with open(self.asset_path("..", "data", "characters.json")) as f:
             characters_data = json.load(f)

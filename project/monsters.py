@@ -169,6 +169,7 @@ class Witch(Monster):
         if self.poisons:
             poison = choice(self.poisons)
             self.cast_poison(poison, target)
+        target.receive_damage(damage)
         return damage
 
 class Zombie(Monster):
@@ -222,10 +223,28 @@ class Spider(Monster):
             damage += self.bonus_damage
         if randint(0, 100) < 40 and self.can_use_potion:
             self.cast_poison(self.poison, target)
+        target.receive_damage(damage)
         return damage
 
+class Troll(Monster):
+    def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item | None], level: int, speed: int, brute_force: int):
+        super().__init__(name, hp, base_damage, bonus_damage, equipment, level, speed)
+        if not isinstance(brute_force, int):
+            raise TypeError("La forza bruta deve essere rappresentata da un intero")
+        if brute_force <= 0:
+            raise ValueError("La forza bruta deve essere maggiore di 0")
+        self.__brute_force = brute_force
 
+    @property
+    def brute_force(self):
+        return self.__brute_force
 
+    def attack(self, target: Character) -> int:
+        damage = self.base_damage
+        if self.hp < self.max_hp // 2:
+            damage += self.brute_force
+        target.receive_damage(damage)
+        return damage
 
 
 

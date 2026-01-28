@@ -113,7 +113,7 @@ class EffectSprite(pygame.sprite.Sprite):
 
     def __init__(self, image_name: str, pos: tuple):
         super().__init__()
-        self.image = pygame.image.load(f"assets/effect/{image_name}.png").convert_alpha()
+        self.image = pygame.image.load(f"../assets/effect/{image_name}.png").convert_alpha()
         self.image = pygame.transform.scale(self.image, (self.SIZE_X, self.SIZE_Y))
         self.rect = self.image.get_rect(center=pos)
         self.timer = 0  
@@ -247,7 +247,8 @@ class BaseSprite(pygame.sprite.Sprite):
 
         group.add(projectile)
 
-    def display_effect(self, target_sprite, effect_name, group):
+    @staticmethod
+    def display_effect(target_sprite, effect_name, group):
         pos = target_sprite.rect.center
         
         effect = EffectSprite(
