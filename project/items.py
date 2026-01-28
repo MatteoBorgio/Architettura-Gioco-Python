@@ -1,7 +1,7 @@
 from abc import ABC
 
-from project.datatypes import Stats
-from project.valid_slot import WEAPON_SLOTS, ARMOR_SLOTS
+from datatypes import Stats
+from valid_slot import WEAPON_SLOTS, ARMOR_SLOTS
 
 class Item(ABC):
     def __init__(self, name: str, weight: int, bonus_stats: Stats):

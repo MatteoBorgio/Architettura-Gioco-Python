@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 from random import randint
 
-from project.datatypes import Stats, Buff, Poison
-from project.errors import InvalidEquipError
-from project.items import Item
-from project.potions import Potion
-from project.valid_slot import CHARACTER_SLOTS
+from datatypes import Stats, Buff, Poison
+from errors import InvalidEquipError
+from items import Item
+from potions import Potion
+from valid_slot import CHARACTER_SLOTS
 
 class Character(ABC):
     def __init__(self, name: str, hp: int, base_stats: Stats, equipment: dict[str, Item | None], mana: int, mana_per_attack: int, special_ability: Buff, potions_set: list[Potion], speed: int):

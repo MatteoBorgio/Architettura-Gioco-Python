@@ -1,15 +1,12 @@
 import os
-import sys
 import pygame
 import json
 
-from project.items import Weapon
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from project.characters import Warrior, Cleric, Thief, Wizard
-from project.datatypes import Stats, Buff
-from project.monsters import Goblin
-from project.view import BaseSprite, SpriteState, CharacterCard, InventoryCard, ProjectileSprite
+from items import Weapon
+from characters import Warrior, Cleric, Thief, Wizard
+from datatypes import Stats, Buff
+from monsters import Goblin
+from view import BaseSprite, SpriteState, CharacterCard, InventoryCard, ProjectileSprite
 from game_state import GameState
 
 class GameController:
@@ -29,7 +26,8 @@ class GameController:
         self.enemy_attack_timer = 0
         self.player_has_attacked = False
         self.inventory_changed = True
-        self.projectiles = None
+        self.projectile = None
+        self.effect = None
 
         self.font_path = self.asset_path("..", "assets", "font", "selection_font.ttf")
         self.selection_font = pygame.font.Font(self.font_path, 36)
@@ -138,7 +136,7 @@ class GameController:
 
         with open(self.asset_path("..", "data", "projectiles.json")) as f:
             projectiles_data = json.load(f)
-        self.projectiles = projectiles_data
+        self.projectile = projectiles_data
 
         for char in self.characters:
             if isinstance(char, Warrior):
@@ -164,9 +162,10 @@ class GameController:
 
     def assign_projectile(self, weapon):
         if weapon.weapon_type == "ranged":
-            for projectile in self.projectiles:
+            for projectile in self.projectile:
                 if projectile["weapon"] == weapon.name:
-                    self.projectiles = projectile
+                    self.projectile = projectile
+                    self.effect = projectile["effect"]
                     break
 
     def create_cards(self):
@@ -275,17 +274,19 @@ class GameController:
                         weapon = self.selected_hero.equipment.get("weapon")
                         proj_info = None
                         if weapon and weapon.weapon_type == "ranged":
-                            for p in self.projectiles:
+                            for p in self.projectile:
                                 if p["weapon"] == weapon.name:
                                     proj_info = {
                                         "name": p["projectile_type"],
-                                        "speed": p["speed"]
+                                        "speed": p["speed"],
+                                        "effect": p["effect"]
                                     }
                                     break
                         self.hero_sprite.start_attack(
                             self.enemy_sprite,
                             projectile_data=proj_info,
-                            group=self.all_sprites
+                            group=self.all_sprites,
+                            effect_name=proj_info["effect"]
                         )
                         self.player_has_attacked = True
 

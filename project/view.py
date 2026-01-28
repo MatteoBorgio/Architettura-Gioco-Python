@@ -1,4 +1,5 @@
 import math
+import os
 
 import pygame
 from enum import Enum
@@ -105,16 +106,35 @@ class InventoryCard(Card):
         if self.item_image:
             screen.blit(self.item_image, self.item_rect)
 
+class EffectSprite(pygame.sprite.Sprite):
+    SIZE_X = 100
+    SIZE_Y = 100
+    DURATION = 2
+
+    def __init__(self, image_name: str, pos: tuple):
+        super().__init__()
+        self.image = pygame.image.load(f"assets/effect/{image_name}.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (self.SIZE_X, self.SIZE_Y))
+        self.rect = self.image.get_rect(center=pos)
+        self.timer = 0  
+
+    def update(self, delta_time):
+        self.timer += delta_time
+        if self.timer > self.DURATION:
+            self.kill()
+
 class ProjectileSprite(pygame.sprite.Sprite):
     SIZE_X = 90
     SIZE_Y = 90
 
-    def __init__(self, image_name: str, start_pos: tuple, target_sprite, speed: int):
+    def __init__(self, image_name: str, start_pos: tuple, target_sprite, speed: int, effect_name: str):
         super().__init__()
         self.target_sprite = target_sprite
-        self.image = pygame.image.load(f"../assets/projectile/{image_name}.png").convert_alpha()
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        self.image = pygame.image.load(os.path.join(current_dir, "..", "assets", "projectile", f"{image_name}.png")).convert_alpha()
         self.image = pygame.transform.scale(self.image, (self.SIZE_X, self.SIZE_Y))
         self.current_x, self.current_y = float(start_pos[0]), float(start_pos[1])
+        self.effect_name = effect_name
 
         tx, ty = target_sprite.rect.center
         dx = tx - self.current_x
@@ -130,6 +150,16 @@ class ProjectileSprite(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect(center=(int(self.current_x), int(self.current_y)))
 
+    def on_impact(self):
+        effect_on_impact = EffectSprite(
+            self.effect_name,
+            self.target_sprite.rect.center
+        )
+        for group in self.groups():
+            group.add(effect_on_impact)
+        
+        self.kill()
+
     def update(self, dt):
         self.current_x += self.dir_x * self.speed * dt
         self.current_y += self.dir_y * self.speed * dt
@@ -137,7 +167,7 @@ class ProjectileSprite(pygame.sprite.Sprite):
         self.rect.center = (int(self.current_x), int(self.current_y))
 
         if self.rect.colliderect(self.target_sprite.rect):
-            self.kill()
+            self.on_impact()
 
 class BaseSprite(pygame.sprite.Sprite):
     BAR_WIDTH = 60
@@ -175,14 +205,14 @@ class BaseSprite(pygame.sprite.Sprite):
         self.image = self.frames["idle"]
         self.rect = self.image.get_rect(midbottom=self.start_position)
 
-    def start_attack(self, target, projectile_data=None, group=None):
+    def start_attack(self, target, effect_name=None, projectile_data=None, group=None):
         self.target = target
         self.state = SpriteState.MOVE_TO_TARGET
         self.timer = 0
 
         if projectile_data:
             self.is_ranged_attack = True
-            self.launch_projectile(target, projectile_data['name'], projectile_data['speed'], group)
+            self.launch_projectile(target, projectile_data['name'], projectile_data['speed'], group, effect_name)
         else:
             self.is_ranged_attack = False
 
@@ -202,19 +232,30 @@ class BaseSprite(pygame.sprite.Sprite):
             self.timer = 0
             self.image = self.frames["attack"]
 
-    def launch_projectile(self, target_sprite, projectile_name, speed, group):
+    def launch_projectile(self, target_sprite, projectile_name, speed, group, effect_name):
         start_pos = self.rect.center
 
         projectile = ProjectileSprite(
             image_name=projectile_name,
             start_pos=start_pos,
             target_sprite=target_sprite,
-            speed=speed
+            speed=speed,
+            effect_name=effect_name
         )
 
         self.image = self.frames["attack"]
 
         group.add(projectile)
+
+    def display_effect(self, target_sprite, effect_name, group):
+        pos = target_sprite.rect.center
+        
+        effect = EffectSprite(
+            effect_name,
+            pos
+        )
+
+        group.add(effect)
 
     def _return_to_start(self, delta_time):
         self.return_timer += delta_time

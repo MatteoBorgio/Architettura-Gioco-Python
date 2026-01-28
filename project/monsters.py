@@ -1,10 +1,10 @@
 from abc import ABC
 from random import choice, randint
 
-from project.characters import Character
-from project.datatypes import Poison
-from project.items import Item
-from project.valid_slot import CHARACTER_SLOTS
+from characters import Character
+from datatypes import Poison
+from items import Item
+from valid_slot import CHARACTER_SLOTS
 
 class Monster(ABC):
     def __init__(self, name: str, hp: int, base_damage: int, bonus_damage: int, equipment: dict[str, Item | None], level: int, speed: int):

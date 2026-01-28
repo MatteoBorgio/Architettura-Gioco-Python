@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 
-from project.datatypes import Buff
+from datatypes import Buff
 
 class Potion(ABC):
     def __init__(self, name: str, mana_consume: int, uses=1):
