@@ -113,7 +113,12 @@ class EffectSprite(pygame.sprite.Sprite):
 
     def __init__(self, image_name: str, pos: tuple):
         super().__init__()
-        self.image = pygame.image.load(f"../assets/effect/{image_name}.png").convert_alpha()
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        image_path = os.path.join(
+            current_dir, "..", "assets", "effect", f"{image_name}.png"
+        )
+        self.image = pygame.image.load(image_path).convert_alpha()
         self.image = pygame.transform.scale(self.image, (self.SIZE_X, self.SIZE_Y))
         self.rect = self.image.get_rect(center=pos)
         self.timer = 0  
