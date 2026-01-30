@@ -18,7 +18,8 @@
     "potions_set": [],
     "healing_per_attack": 5,
     "poison_mitigation": 3,
-    "speed": 15
+    "speed": 15,
+    "default_weapon": "Holy Spear"
   },
   {
     "name": "Eddard Stark",
@@ -38,7 +39,8 @@
     },
     "potions_set": [],
     "shield": 5,
-    "speed": 20
+    "speed": 15,
+    "default_weapon": "Long Sword"
   },
   {
     "name": "Faceless",
@@ -58,7 +60,8 @@
     },
     "potions_set": [],
     "critical_bonus": 5,
-    "speed": 40
+    "speed": 20,
+    "default_weapon": "Dagger"
   },
   {
     "name": "Melisandre",
@@ -79,6 +82,8 @@
     "potions_set": [],
     "buff_amount_boost": 3,
     "buff_duration_boost": 2,
-    "speed": 10
+    "speed": 10,
+    "default_weapon": "Scepter"
+
   }
 ]

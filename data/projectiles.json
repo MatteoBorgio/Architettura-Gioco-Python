@@ -2,7 +2,7 @@
   {
     "weapon": "Scepter",
     "projectile_type": "fireball",
-    "speed": 300,
+    "speed": 320,
     "effect": "explosion"
   }
 ]
