@@ -1,4 +1,5 @@
 import json
+import random
 from project.assets_manager import AssetsManager
 from project.factory import GameFactory
 
@@ -10,6 +11,9 @@ class DataManager:
         "monsters": ("data", "monsters.json")
     }
 
+    _raw_monsters = []
+    _projectiles = []
+
     @staticmethod
     def _load_json(key):
         path = AssetsManager.asset_path("..", *DataManager.DATA_FILES[key])
@@ -20,12 +24,10 @@ class DataManager:
     def load_data():
         raw_chars = DataManager._load_json("characters")
         raw_weapons = DataManager._load_json("weapons")
-        raw_monsters = DataManager._load_json("monsters")
-        projectiles = DataManager._load_json("projectiles")
+        DataManager._raw_monsters = DataManager._load_json("monsters")
+        DataManager._projectiles = DataManager._load_json("projectiles")
 
         weapons = [GameFactory.create_weapon(d) for d in raw_weapons]
-        monsters = [GameFactory.create_monster(d) for d in raw_monsters]
-
         weapon_map = {w.name: w for w in weapons}
 
         characters = []
@@ -34,7 +36,25 @@ class DataManager:
             weapon_name = d.get("default_weapon")
             if weapon_name in weapon_map:
                 char.equip(weapon_map[weapon_name])
-
             characters.append(char)
 
-        return characters, weapons, projectiles, monsters
+        return characters, weapons
+
+    @staticmethod
+    def get_random_monster():
+        if not DataManager._raw_monsters:
+            return None
+
+        data = random.choice(DataManager._raw_monsters)
+        return GameFactory.create_monster(data)
+
+    @staticmethod
+    def get_projectile_data(weapon_name):
+        for p in DataManager._projectiles:
+            if p["weapon"] == weapon_name:
+                return {
+                    "name": p["projectile_type"],
+                    "speed": p["speed"],
+                    "effect": p["effect"]
+                }
+        return None

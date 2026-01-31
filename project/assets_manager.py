@@ -19,3 +19,13 @@ class AssetsManager:
         except pygame.error:
             print(f"Errore: Impossibile trovare {path}")
             return pygame.Surface((32, 32))
+
+    @staticmethod
+    def get_frames_for_character(char):
+        folder = char.__class__.__name__.lower()
+        return {
+            "idle": AssetsManager.asset_path("..", "assets", folder, f"{folder}_1.png"),
+            "walk_1": AssetsManager.asset_path("..", "assets", folder, f"{folder}_2.png"),
+            "walk_2": AssetsManager.asset_path("..", "assets", folder, f"{folder}_3.png"),
+            "attack": AssetsManager.asset_path("..", "assets", folder, f"{folder}_4.png")
+        }
