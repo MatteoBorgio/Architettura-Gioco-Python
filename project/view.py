@@ -14,6 +14,36 @@ class SpriteState(Enum):
     ATTACK = "attack"
     RETURN = "return"
 
+class Button:
+    def __init__(self, pos, filename, scale):
+        self.image = pygame.image.load(filename).convert_alpha()
+        self.image = pygame.transform.scale(self.image, scale)
+        self.rect = self.image.get_rect(center=pos)
+
+        self.is_active = True
+        self._pressed = False
+        self.clicked = False
+
+    def handle_event(self, event):
+        if not self.is_active:
+            return
+
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.rect.collidepoint(event.pos):
+                self._pressed = True
+
+        if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            if self._pressed and self.rect.collidepoint(event.pos):
+                self.clicked = True
+            self._pressed = False
+
+    def update(self):
+        self.clicked = False
+
+    def draw(self, screen):
+        screen.blit(self.image, self.rect)
+
+
 class Card:
     WIDTH = 100
     HEIGHT = 150
@@ -319,6 +349,11 @@ class UIManager:
         self.character_cards = []
         self.inventory_cards = []
 
+        self.attack_button = Button((100, 530), AssetsManager.asset_path("..", "assets", "buttons", "attack.png"), (200, 200))
+
+    def handle_event(self, event):
+        self.attack_button.handle_event(event)
+
     @staticmethod
     def _load_font():
         path = AssetsManager.asset_path("..", "assets", "font", "selection_font.ttf")
@@ -421,9 +456,13 @@ class UIManager:
         for card in self.character_cards:
             card.draw(self.screen)
 
+    def update(self):
+        self.attack_button.update()
+
     def _draw_battle_scene(self, all_sprites, hero, enemy):
         if self.background:
             self.screen.blit(self.background, (0, 0))
+            self.attack_button.draw(self.screen)
 
             if all_sprites:
                 all_sprites.draw(self.screen)

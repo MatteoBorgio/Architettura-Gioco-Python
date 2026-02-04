@@ -71,15 +71,14 @@ class GameController:
             if event.type == pygame.QUIT:
                 self.running = False
 
-            if self.game_state == GameState.CHARACTER_SELECT and event.type == pygame.MOUSEBUTTONDOWN:
-                selected_model = self.ui.handle_selection_click(event.pos)
-                if selected_model:
-                    self.start_battle(selected_model)
+            if self.game_state == GameState.CHARACTER_SELECT:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    selected_model = self.ui.handle_selection_click(event.pos)
+                    if selected_model:
+                        self.start_battle(selected_model)
 
-            elif self.game_state == GameState.BATTLE_MODE and event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE and not self.waiting_for_respawn:
-                    if self.turn == "player" and not self.player_action_performed:
-                        self.perform_player_attack()
+            elif self.game_state == GameState.BATTLE_MODE:
+                self.ui.handle_event(event)
 
     def perform_player_attack(self):
         weapon = self.selected_hero.equipment.get("weapon")
@@ -97,26 +96,50 @@ class GameController:
 
     def update(self, dt):
         if self.game_state == GameState.BATTLE_MODE:
+
+            if (
+                    self.selected_hero is not None
+                    and self.turn == "player"
+                    and not self.player_action_performed
+                    and not self.waiting_for_respawn
+                    and self.ui.attack_button.clicked
+            ):
+                self.perform_player_attack()
+
+            self.ui.update()
+
             self.all_sprites.update(dt)
             self._update_battle_logic(dt)
 
-            if self.selected_hero.hp <= 0:
+            self.ui.attack_button.is_active = (
+                    self.turn == "player"
+                    and not self.player_action_performed
+                    and not self.waiting_for_respawn
+            )
+
+            if self.selected_hero and self.selected_hero.hp <= 0:
                 print("GAME OVER")
                 self.running = False
+                return
 
-            if self.ui.is_over:
-                print("GAME OVER")
-                self.running = False
-
-            elif self.enemy_sprite.model.hp <= 0 and not self.waiting_for_respawn:
+            if (
+                    not self.waiting_for_respawn
+                    and self.enemy_sprite
+                    and self.enemy_sprite.model.hp <= 0
+            ):
                 print("Nemico sconfitto. Attesa respawn...")
                 self.enemy_sprite.kill()
                 self.waiting_for_respawn = True
                 self.respawn_timer = 0
 
-            if self.inventory_changed:
-                self.ui.update_inventory(self.selected_hero)
-                self.inventory_changed = False
+        if self.ui.is_over:
+            print("GAME OVER")
+            self.running = False
+            return
+
+        if self.inventory_changed and self.selected_hero:
+            self.ui.update_inventory(self.selected_hero)
+            self.inventory_changed = False
 
     def _update_battle_logic(self, dt):
         if self.waiting_for_respawn:
