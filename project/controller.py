@@ -1,11 +1,9 @@
-from random import randint
 import pygame
 
 from project.view import BaseSprite, SpriteState, ProjectileSprite, UIManager, PLAYER_START_POS, ENEMY_START_POS
 from project.game_state import GameState
 from project.assets_manager import AssetsManager
 from project.data_manager import DataManager
-
 
 class GameController:
     def __init__(self):
@@ -18,12 +16,10 @@ class GameController:
         self.game_state = GameState.CHARACTER_SELECT
         self.turn = "player"
 
-        # Logica Turni e Timer
         self.enemy_wait_timer = 0
         self.player_action_performed = False
         self.enemy_action_performed = False
 
-        # Logica Respawn
         self.waiting_for_respawn = False
         self.respawn_timer = 0
 
@@ -60,7 +56,7 @@ class GameController:
         self.turn = "player"
         self.player_action_performed = False
         self.enemy_action_performed = False
-        self.waiting_for_respawn = False  # Reset stato respawn
+        self.waiting_for_respawn = False
 
         self.ui.update_inventory(self.selected_hero)
         self.inventory_changed = False
@@ -81,7 +77,6 @@ class GameController:
                     self.start_battle(selected_model)
 
             elif self.game_state == GameState.BATTLE_MODE and event.type == pygame.KEYDOWN:
-                # Blocca input se stiamo aspettando il respawn
                 if event.key == pygame.K_SPACE and not self.waiting_for_respawn:
                     if self.turn == "player" and not self.player_action_performed:
                         self.perform_player_attack()
@@ -105,18 +100,19 @@ class GameController:
             self.all_sprites.update(dt)
             self._update_battle_logic(dt)
 
-            # CASO 1: Game Over
             if self.selected_hero.hp <= 0:
                 print("GAME OVER")
                 self.running = False
 
-            # CASO 2: Nemico morto (Innesco Respawn)
-            # Controlliamo se è morto E se non abbiamo già attivato la procedura di attesa
+            if self.ui.is_over:
+                print("GAME OVER")
+                self.running = False
+
             elif self.enemy_sprite.model.hp <= 0 and not self.waiting_for_respawn:
                 print("Nemico sconfitto. Attesa respawn...")
-                self.enemy_sprite.kill()  # Rimuove visivamente il nemico subito
+                self.enemy_sprite.kill()
                 self.waiting_for_respawn = True
-                self.respawn_timer = 0  # Azzera il timer
+                self.respawn_timer = 0
 
             if self.inventory_changed:
                 self.ui.update_inventory(self.selected_hero)
@@ -136,6 +132,7 @@ class GameController:
                     self.player_action_performed = False
                     self.enemy_action_performed = False
                     print("Nuovo nemico apparso!")
+                    self.ui.refresh_background()
             return
 
         if self.turn == "player":

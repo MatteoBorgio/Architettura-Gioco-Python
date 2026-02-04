@@ -5,8 +5,8 @@ from enum import Enum
 from project.assets_manager import AssetsManager
 from project.game_state import GameState
 
-PLAYER_START_POS = (200, 490)
-ENEMY_START_POS = (600, 500)
+PLAYER_START_POS = (200, 400)
+ENEMY_START_POS = (600, 400)
 
 class SpriteState(Enum):
     IDLE = "idle"
@@ -298,8 +298,8 @@ class BaseSprite(pygame.sprite.Sprite):
             self.image = self.frames["idle"]
             self.return_timer = 0
 
-
 class UIManager:
+    NUMBER_OF_BACKGROUNDS = 9
     def __init__(self, width, height):
         pygame.init()
         self.WIDTH = width
@@ -309,8 +309,12 @@ class UIManager:
         self.screen_rect = self.screen.get_rect()
 
         self.font = self._load_font()
-        self.bg_battle = self._load_bg("background.jpg")
-        self.bg_selection = self._load_bg("menu_wooden_board.jpg")
+        self.backgrounds = []
+        self._load_backgrounds("bg")
+
+        self.background = self.backgrounds[0]
+        self.is_over = False
+        self.bg_selection = self._load_background_image("menu_wooden_board.jpg")
 
         self.character_cards = []
         self.inventory_cards = []
@@ -320,10 +324,28 @@ class UIManager:
         path = AssetsManager.asset_path("..", "assets", "font", "selection_font.ttf")
         return pygame.font.Font(path, 36) if os.path.exists(path) else pygame.font.SysFont("Arial", 36)
 
-    def _load_bg(self, filename):
-        path = AssetsManager.asset_path("..", "assets", filename)
-        img = pygame.image.load(path).convert()
+    def _load_background_image(self, filename, subfolder=None):
+        if subfolder:
+            path = AssetsManager.asset_path("..", "assets", subfolder, filename)
+        else:
+            path = AssetsManager.asset_path("..", "assets", filename)
+        img = pygame.image.load(path).convert_alpha()
         return pygame.transform.scale(img, (self.WIDTH, self.HEIGHT))
+
+    def _load_backgrounds(self, subfolder=None):
+        for i in range(self.NUMBER_OF_BACKGROUNDS):
+            bg = self._load_background_image(
+                f"sfondo_{i + 1}.png",
+                subfolder=subfolder
+            )
+            self.backgrounds.append(bg)
+
+    def refresh_background(self):
+        if not self.backgrounds:
+            self.is_over = True
+            return
+        self.background = self.backgrounds[0]
+        self.backgrounds.remove(self.backgrounds[0])
 
     def create_character_selection_screen(self, characters):
         self.character_cards.clear()
@@ -400,16 +422,17 @@ class UIManager:
             card.draw(self.screen)
 
     def _draw_battle_scene(self, all_sprites, hero, enemy):
-        self.screen.blit(self.bg_battle, (0, 0))
+        if self.background:
+            self.screen.blit(self.background, (0, 0))
 
-        if all_sprites:
-            all_sprites.draw(self.screen)
+            if all_sprites:
+                all_sprites.draw(self.screen)
 
-        if hero:
-            hero.draw_hp_bar(self.screen)
+            if hero:
+                hero.draw_hp_bar(self.screen)
 
-        if enemy:
-            enemy.draw_hp_bar(self.screen)
+            if enemy:
+                enemy.draw_hp_bar(self.screen)
 
-        for card in self.inventory_cards:
-            card.draw(self.screen)
+            for card in self.inventory_cards:
+                card.draw(self.screen)
