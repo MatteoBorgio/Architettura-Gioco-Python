@@ -43,7 +43,6 @@ class Button:
     def draw(self, screen):
         screen.blit(self.image, self.rect)
 
-
 class Card:
     WIDTH = 100
     HEIGHT = 150
@@ -350,9 +349,11 @@ class UIManager:
         self.inventory_cards = []
 
         self.attack_button = Button((100, 530), AssetsManager.asset_path("..", "assets", "buttons", "attack.png"), (200, 200))
+        self.special_ability_button = Button((700, 530), AssetsManager.asset_path("..", "assets", "buttons", "special.png"), (200, 200))
 
-    def handle_event(self, event):
+    def handle_ui_event(self, event):
         self.attack_button.handle_event(event)
+        self.special_ability_button.handle_event(event)
 
     @staticmethod
     def _load_font():
@@ -458,11 +459,13 @@ class UIManager:
 
     def update(self):
         self.attack_button.update()
+        self.special_ability_button.update()
 
     def _draw_battle_scene(self, all_sprites, hero, enemy):
         if self.background:
             self.screen.blit(self.background, (0, 0))
             self.attack_button.draw(self.screen)
+            self.special_ability_button.draw(self.screen)
 
             if all_sprites:
                 all_sprites.draw(self.screen)

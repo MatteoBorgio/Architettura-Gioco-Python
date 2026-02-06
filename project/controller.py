@@ -61,6 +61,13 @@ class GameController:
         self.ui.update_inventory(self.selected_hero)
         self.inventory_changed = False
 
+    def activate_ability(self):
+        if not self.selected_hero.used_special_ability:
+            self.selected_hero.add_buff(self.selected_hero.special_ability)
+            self.selected_hero.used_special_ability = True
+            self.player_action_performed = True
+            print("Special ability activated")
+
     def pick_new_enemy(self):
         monster_model = DataManager.get_random_monster()
         frames = self._get_frames(monster_model)
@@ -76,9 +83,13 @@ class GameController:
                     selected_model = self.ui.handle_selection_click(event.pos)
                     if selected_model:
                         self.start_battle(selected_model)
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    selected_model = self.ui.handle_selection_click(event.pos)
+                    if selected_model:
+                        self.activate_ability()
 
             elif self.game_state == GameState.BATTLE_MODE:
-                self.ui.handle_event(event)
+                self.ui.handle_ui_event(event)
 
     def perform_player_attack(self):
         weapon = self.selected_hero.equipment.get("weapon")
@@ -102,12 +113,16 @@ class GameController:
                     and self.turn == "player"
                     and not self.player_action_performed
                     and not self.waiting_for_respawn
-                    and self.ui.attack_button.clicked
             ):
-                self.perform_player_attack()
+                if self.ui.attack_button.clicked:
+                    self.perform_player_attack()
+                    self.ui.attack_button.clicked = False
+
+                elif self.ui.special_ability_button.clicked:
+                    self.activate_ability()
+                    self.ui.special_ability_button.clicked = False
 
             self.ui.update()
-
             self.all_sprites.update(dt)
             self._update_battle_logic(dt)
 
@@ -117,8 +132,15 @@ class GameController:
                     and not self.waiting_for_respawn
             )
 
+            self.ui.special_ability_button.is_active = (
+                    self.turn == "player"
+                    and not self.player_action_performed
+                    and not self.waiting_for_respawn
+                    and self.selected_hero
+                    and not self.selected_hero.used_special_ability
+            )
+
             if self.selected_hero and self.selected_hero.hp <= 0:
-                print("GAME OVER")
                 self.running = False
                 return
 
@@ -127,13 +149,11 @@ class GameController:
                     and self.enemy_sprite
                     and self.enemy_sprite.model.hp <= 0
             ):
-                print("Nemico sconfitto. Attesa respawn...")
                 self.enemy_sprite.kill()
                 self.waiting_for_respawn = True
                 self.respawn_timer = 0
 
         if self.ui.is_over:
-            print("GAME OVER")
             self.running = False
             return
 
