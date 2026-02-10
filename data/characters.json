@@ -12,8 +12,8 @@
     "special_ability": {
         "name": "God Protection",
         "stat": "defense",
-        "amount": 5,
-        "duration": 2
+        "amount": 8,
+        "duration": 4
     },
     "potions_set": [],
     "healing_per_attack": 5,
@@ -34,8 +34,8 @@
     "special_ability": {
         "name": "Warrior's Might",
         "stat": "strength",
-        "amount": 3,
-        "duration": 2
+        "amount": 7,
+        "duration": 7
     },
     "potions_set": [],
     "shield": 5,
@@ -55,8 +55,8 @@
     "special_ability": {
       "name": "Stealth Murder",
       "stat": "dexterity",
-      "amount": 4,
-      "duration": 3
+      "amount": 7,
+      "duration": 5
     },
     "potions_set": [],
     "critical_bonus": 5,
@@ -76,8 +76,8 @@
     "special_ability": {
       "name": "Dragon's Breath",
       "stat": "intelligence",
-      "amount": 3,
-      "duration": 5
+      "amount": 6,
+      "duration": 8
     },
     "potions_set": [],
     "buff_amount_boost": 3,

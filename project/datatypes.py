@@ -45,6 +45,7 @@ class Buff:
     stat: str
     amount: int
     duration: int
+    applied: bool=False
 
     def __post_init__(self):
         if not isinstance(self.name, str) or self.name == "":

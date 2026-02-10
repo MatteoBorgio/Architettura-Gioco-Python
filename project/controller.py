@@ -12,23 +12,22 @@ class GameController:
         self.running = True
 
         self.ui = UIManager(WIDTH, HEIGHT)
-
         self.game_state = GameState.CHARACTER_SELECT
-        self.turn = "player"
 
-        self.enemy_wait_timer = 0
+        self.turn = "player"
+        self.turn_started = False
+        self.round_active = False  # 🔑 controlla se dobbiamo tickare i buff
+
         self.player_action_performed = False
         self.enemy_action_performed = False
+        self.enemy_wait_timer = 0
 
         self.waiting_for_respawn = False
         self.respawn_timer = 0
 
-        self.inventory_changed = True
         self.selected_hero = None
         self.all_sprites = pygame.sprite.Group()
-
-        self.characters = []
-        self.weapons = []
+        self.inventory_changed = True
 
         self.load_resources()
         self.ui.create_character_selection_screen(self.characters)
@@ -44,7 +43,6 @@ class GameController:
 
     def start_battle(self, selected_hero_model):
         self.selected_hero = selected_hero_model
-
         hero_frames = self._get_frames(self.selected_hero)
         self.hero_sprite = BaseSprite(self.selected_hero, PLAYER_START_POS, hero_frames)
 
@@ -83,10 +81,6 @@ class GameController:
                     selected_model = self.ui.handle_selection_click(event.pos)
                     if selected_model:
                         self.start_battle(selected_model)
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    selected_model = self.ui.handle_selection_click(event.pos)
-                    if selected_model:
-                        self.activate_ability()
 
             elif self.game_state == GameState.BATTLE_MODE:
                 self.ui.handle_ui_event(event)
@@ -94,7 +88,6 @@ class GameController:
     def perform_player_attack(self):
         weapon = self.selected_hero.equipment.get("weapon")
         proj_info = None
-
         if weapon and weapon.weapon_type == "ranged":
             proj_info = DataManager.get_projectile_data(weapon.name)
 
@@ -106,52 +99,56 @@ class GameController:
         self.player_action_performed = True
 
     def update(self, dt):
-        if self.game_state == GameState.BATTLE_MODE:
+        if self.game_state != GameState.BATTLE_MODE:
+            return
 
-            if (
-                    self.selected_hero is not None
-                    and self.turn == "player"
-                    and not self.player_action_performed
-                    and not self.waiting_for_respawn
-            ):
-                if self.ui.attack_button.clicked:
-                    self.perform_player_attack()
-                    self.ui.attack_button.clicked = False
+        # gestioni pulsanti
+        if (
+            self.selected_hero
+            and self.turn == "player"
+            and not self.player_action_performed
+            and not self.waiting_for_respawn
+        ):
+            if self.ui.attack_button.clicked:
+                self.perform_player_attack()
+                self.ui.attack_button.clicked = False
+            elif self.ui.special_ability_button.clicked:
+                self.activate_ability()
+                self.ui.special_ability_button.clicked = False
 
-                elif self.ui.special_ability_button.clicked:
-                    self.activate_ability()
-                    self.ui.special_ability_button.clicked = False
+        self.ui.update()
+        self.all_sprites.update(dt)
+        self._update_battle_logic(dt)
 
-            self.ui.update()
-            self.all_sprites.update(dt)
-            self._update_battle_logic(dt)
+        self.ui.attack_button.is_active = (
+            self.turn == "player" and not self.player_action_performed and not self.waiting_for_respawn
+        )
 
-            self.ui.attack_button.is_active = (
-                    self.turn == "player"
-                    and not self.player_action_performed
-                    and not self.waiting_for_respawn
-            )
+        self.ui.special_ability_button.is_active = (
+            self.turn == "player"
+            and not self.player_action_performed
+            and not self.waiting_for_respawn
+            and self.selected_hero
+            and not self.selected_hero.used_special_ability
+        )
 
-            self.ui.special_ability_button.is_active = (
-                    self.turn == "player"
-                    and not self.player_action_performed
-                    and not self.waiting_for_respawn
-                    and self.selected_hero
-                    and not self.selected_hero.used_special_ability
-            )
+        # se il player muore -> game over
+        if self.selected_hero and self.selected_hero.hp <= 0:
+            self.running = False
+            return
 
-            if self.selected_hero and self.selected_hero.hp <= 0:
-                self.running = False
-                return
-
-            if (
-                    not self.waiting_for_respawn
-                    and self.enemy_sprite
-                    and self.enemy_sprite.model.hp <= 0
-            ):
-                self.enemy_sprite.kill()
-                self.waiting_for_respawn = True
-                self.respawn_timer = 0
+        # se il nemico muore -> fine round e respawn
+        if (
+            not self.waiting_for_respawn
+            and self.enemy_sprite
+            and self.enemy_sprite.model.hp <= 0
+        ):
+            self.enemy_sprite.kill()
+            if self.round_active:
+                self.selected_hero.end_round()
+                self.round_active = False
+            self.waiting_for_respawn = True
+            self.respawn_timer = 0
 
         if self.ui.is_over:
             self.running = False
@@ -162,32 +159,45 @@ class GameController:
             self.inventory_changed = False
 
     def _update_battle_logic(self, dt):
+        # =========================
+        # Resapwn nemico
+        # =========================
         if self.waiting_for_respawn:
             if self.hero_sprite.state == SpriteState.IDLE:
                 self.respawn_timer += dt
-
                 if self.respawn_timer >= 2.0:
                     self.pick_new_enemy()
                     self.all_sprites.add(self.enemy_sprite)
-
                     self.waiting_for_respawn = False
                     self.turn = "player"
+                    self.turn_started = False
+                    self.round_active = False
                     self.player_action_performed = False
                     self.enemy_action_performed = False
                     print("Nuovo nemico apparso!")
                     self.ui.refresh_background()
             return
 
+        # =========================
+        # Turno Player
+        # =========================
         if self.turn == "player":
+            if not self.turn_started:
+                self.selected_hero.start_turn()
+                self.turn_started = True
+                self.round_active = True  # 🔑 round inizia qui
+
             projectiles_active = any(isinstance(s, ProjectileSprite) for s in self.all_sprites)
 
             if self.player_action_performed and not projectiles_active:
                 if self.hero_sprite.state == SpriteState.IDLE:
                     self.turn = "enemy"
-                    self.player_action_performed = False
-                    self.enemy_action_performed = False
+                    self.turn_started = False
                     self.enemy_wait_timer = 0
 
+        # =========================
+        # Turno Nemico
+        # =========================
         elif self.turn == "enemy":
             self._handle_enemy_turn_logic(dt)
 
@@ -199,13 +209,17 @@ class GameController:
                 self.enemy_action_performed = True
 
         if self.enemy_action_performed and self.enemy_sprite.state == SpriteState.IDLE:
+            if self.round_active:
+                self.selected_hero.end_round()
+                self.round_active = False
+
             self.turn = "player"
             self.enemy_action_performed = False
+            self.player_action_performed = False
 
     def render(self):
         if self.game_state == GameState.BATTLE_MODE:
             current_enemy = None if self.waiting_for_respawn else self.enemy_sprite
-
             self.ui.render_game(
                 self.game_state,
                 all_sprites=self.all_sprites,
@@ -222,6 +236,7 @@ class GameController:
             self.update(dt)
             self.render()
         pygame.quit()
+
 
 if __name__ == "__main__":
     controller = GameController()

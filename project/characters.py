@@ -184,24 +184,24 @@ class Character(ABC):
             raise TypeError("Un buff deve essere un'istanza di Buff")
         self.active_buffs.append(buff)
 
-    def apply_buffs(self, buffs: list[Buff]):
-        if not isinstance(buffs, list):
-            raise TypeError("I buff devono essere rappresentati da una lista")
-        for element in buffs:
-            if not isinstance(element, Buff):
-                raise TypeError("Tutti i buff devono essere un'istanza di Buff")
+    def apply_buffs(self, buffs):
         for buff in buffs:
-            setattr(self.__base_stats, buff.stat,(getattr(self.__base_stats, buff.stat) + buff.amount))
+            if not buff.applied:
+                setattr(
+                    self.base_stats,
+                    buff.stat,
+                    getattr(self.base_stats, buff.stat) + buff.amount
+                )
+                buff.applied = True
 
-    def remove_buffs(self, buffs: list[Buff]):
-        if not isinstance(buffs, list):
-            raise TypeError("I buff devono essere rappresentati da una lista")
-        for element in buffs:
-            if not isinstance(element, Buff):
-                raise TypeError("Tutti i buff devono essere un'istanza di Buff")
-        for buff in buffs:
-            if buff.duration == 0:
-                setattr(self.__base_stats, buff.stat, (getattr(self.__base_stats, buff.stat) - buff.amount))
+    def remove_buffs(self):
+        for buff in self.active_buffs[:]:
+            if buff.duration <= 0:
+                setattr(
+                    self.base_stats,
+                    buff.stat,
+                    getattr(self.base_stats, buff.stat) - buff.amount
+                )
                 self.active_buffs.remove(buff)
 
     def add_poison(self, poison: Poison):
@@ -255,6 +255,13 @@ class Character(ABC):
     @abstractmethod
     def attack(self, target: "Character") -> int:
         pass
+
+    def start_turn(self):
+        self.apply_buffs(self.active_buffs)
+
+    def end_round(self):
+        Character.tick_buffs(self.active_buffs)
+        self.remove_buffs()
 
     def __str__(self):
         return f"{self.name} ({self.hp}/{self.max_hp})"
