@@ -163,6 +163,7 @@ class GameController:
                 self.selected_hero.end_round()
                 self.round_active = False
             self.waiting_for_respawn = True
+            self.selected_hero.used_special_ability = False
             self.respawn_timer = 0
 
         if self.ui.is_over:
