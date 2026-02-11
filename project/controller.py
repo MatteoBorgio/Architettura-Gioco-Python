@@ -34,9 +34,10 @@ class GameController:
         self.ui.create_battle_interface()
 
     def load_resources(self):
-        chars_objs, weapons_objs = DataManager.load_data()
+        chars_objs, weapons_objs, potions_objs = DataManager.load_data()
         self.characters = chars_objs
         self.weapons = weapons_objs
+        self.potions = potions_objs
 
     def _get_frames(self, model):
         return AssetsManager.get_frames_for_character(model)
@@ -82,7 +83,24 @@ class GameController:
                     if selected_model:
                         self.start_battle(selected_model)
 
+
             elif self.game_state == GameState.BATTLE_MODE:
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if (
+                            self.turn == "player"
+                            and not self.player_action_performed
+                            and not self.waiting_for_respawn
+                    ):
+                        for slot in self.ui.inventory_cards:
+                            used = slot.check_collide(event.pos, self.selected_hero)
+                            if used:
+                                if slot.model in self.selected_hero.potions_set:
+                                    self.selected_hero.potions_set.remove(slot.model)
+                                self.player_action_performed = True
+                                self.inventory_changed = True
+                                break
+
                 self.ui.handle_ui_event(event)
 
     def perform_player_attack(self):
@@ -176,7 +194,7 @@ class GameController:
             if not self.turn_started:
                 self.selected_hero.start_turn()
                 self.turn_started = True
-                self.round_active = True  # 🔑 round inizia qui
+                self.round_active = True
 
             projectiles_active = any(isinstance(s, ProjectileSprite) for s in self.all_sprites)
 
@@ -224,7 +242,6 @@ class GameController:
             self.update(dt)
             self.render()
         pygame.quit()
-
 
 if __name__ == "__main__":
     controller = GameController()

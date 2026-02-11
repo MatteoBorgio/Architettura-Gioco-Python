@@ -2,6 +2,7 @@ from characters import Warrior, Cleric, Thief, Wizard
 from datatypes import Stats, Buff
 from items import Weapon
 from monsters import Goblin, Spider, Witch, Zombie, Troll
+from project.potions import HealPotion, BuffPotion
 
 class GameFactory:
         @staticmethod
@@ -85,5 +86,22 @@ class GameFactory:
                 kwargs["buff_stole_per_turn"] = data["buff_stole_per_turn"]
             elif cls is Troll:
                 kwargs["brute_force"] = data["brute_force"]
+
+            return cls(**kwargs)
+
+        @staticmethod
+        def create_potion(data):
+            cls_map = {"HealPotion": HealPotion, "BuffPotion": BuffPotion}
+            cls = cls_map.get(data["class"])
+            kwargs = {
+                "name": data["name"],
+                "mana_consume": data["mana_consume"],
+                "uses": data["uses"] if data["uses"] else 1
+            }
+
+            if cls is HealPotion:
+                kwargs["healing_effect"] = data["healing_effect"]
+            if cls is BuffPotion:
+                kwargs["buff"] = data["buff"]
 
             return cls(**kwargs)

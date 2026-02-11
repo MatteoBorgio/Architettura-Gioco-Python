@@ -1,0 +1,9 @@
+[
+  {
+    "class": "HealPotion",
+    "name": "Healing Elixir",
+    "mana_consume": 10,
+    "healing_effect": 20,
+    "uses": 1
+  }
+]

@@ -4,6 +4,8 @@ import pygame
 from enum import Enum
 from project.assets_manager import AssetsManager
 from project.game_state import GameState
+from project.items import ArmorPiece
+from project.potions import Potion
 
 PLAYER_START_POS = (200, 400)
 ENEMY_START_POS = (600, 400)
@@ -142,10 +144,15 @@ class InventoryCard(Card):
         else:
             self.item_image = None
 
+    def check_collide(self, mouse_pos, selected_hero):
+        if self.is_clicked(mouse_pos) and isinstance(self.model, Potion):
+            self.model.use(selected_hero)
+            return True
+        return False
+
     def draw(self, screen):
         if self.asset_image: screen.blit(self.asset_image, self.asset_rect)
         if self.item_image: screen.blit(self.item_image, self.item_rect)
-
 
 class EffectSprite(pygame.sprite.Sprite):
     SIZE_X = 100
@@ -164,7 +171,6 @@ class EffectSprite(pygame.sprite.Sprite):
         self.timer += dt
         if self.timer > self.DURATION:
             self.kill()
-
 
 class ProjectileSprite(pygame.sprite.Sprite):
     SIZE_X = 60
@@ -207,7 +213,6 @@ class ProjectileSprite(pygame.sprite.Sprite):
             for group in self.groups():
                 group.add(effect)
         self.kill()
-
 
 class BaseSprite(pygame.sprite.Sprite):
     BAR_WIDTH = 60
@@ -419,20 +424,30 @@ class UIManager:
             self.inventory_cards.append(card)
 
     def update_inventory(self, hero):
-        keys = list(hero.equipment.keys())
-        slots = keys + [None] * (5 - len(keys))
+        equipment_items = [item for item in hero.equipment.values() if item]
+        potion_items = list(hero.potions_set)
+
+        all_items = equipment_items + potion_items
+        all_items = all_items[:5]
+
+        while len(all_items) < 5:
+            all_items.append(None)
 
         for i, card in enumerate(self.inventory_cards):
-            if i >= len(slots): break
-            slot = slots[i]
-            item = hero.equipment.get(slot) if slot else None
-
+            item = all_items[i]
             card.model = item
             card.asset_image_path = AssetsManager.asset_path("..", "assets", "wooden_board.png")
-
             if item:
-                folder = "weapon" if slot == "weapon" else "armor"
-                card.item_image_path = AssetsManager.asset_path("..", "assets", folder, f"{item.name}.png")
+                if hasattr(item, "weapon_type"):
+                    folder = "weapon"
+                elif isinstance(item, ArmorPiece):
+                    folder = "armor"
+                else:
+                    folder = "potions"
+
+                card.item_image_path = AssetsManager.asset_path(
+                    "..", "assets", folder, f"{item.name}.png"
+                )
             else:
                 card.item_image_path = None
             card.load_images()
