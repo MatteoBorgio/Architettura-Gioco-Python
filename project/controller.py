@@ -16,7 +16,7 @@ class GameController:
 
         self.turn = "player"
         self.turn_started = False
-        self.round_active = False  # 🔑 controlla se dobbiamo tickare i buff
+        self.round_active = False
 
         self.player_action_performed = False
         self.enemy_action_performed = False
@@ -102,7 +102,6 @@ class GameController:
         if self.game_state != GameState.BATTLE_MODE:
             return
 
-        # gestioni pulsanti
         if (
             self.selected_hero
             and self.turn == "player"
@@ -132,12 +131,10 @@ class GameController:
             and not self.selected_hero.used_special_ability
         )
 
-        # se il player muore -> game over
         if self.selected_hero and self.selected_hero.hp <= 0:
             self.running = False
             return
 
-        # se il nemico muore -> fine round e respawn
         if (
             not self.waiting_for_respawn
             and self.enemy_sprite
@@ -159,9 +156,6 @@ class GameController:
             self.inventory_changed = False
 
     def _update_battle_logic(self, dt):
-        # =========================
-        # Resapwn nemico
-        # =========================
         if self.waiting_for_respawn:
             if self.hero_sprite.state == SpriteState.IDLE:
                 self.respawn_timer += dt
@@ -178,9 +172,6 @@ class GameController:
                     self.ui.refresh_background()
             return
 
-        # =========================
-        # Turno Player
-        # =========================
         if self.turn == "player":
             if not self.turn_started:
                 self.selected_hero.start_turn()
@@ -195,9 +186,6 @@ class GameController:
                     self.turn_started = False
                     self.enemy_wait_timer = 0
 
-        # =========================
-        # Turno Nemico
-        # =========================
         elif self.turn == "enemy":
             self._handle_enemy_turn_logic(dt)
 
