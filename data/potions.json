@@ -5,5 +5,29 @@
     "mana_consume": 10,
     "healing_effect": 20,
     "uses": 1
+  },
+  {
+    "class": "BuffPotion",
+    "name": "Dragon's Blood",
+    "mana_consume": 20,
+    "uses": 1,
+    "buff": {
+      "name": "Strength buff",
+      "stat": "strength",
+      "amount": 10,
+      "duration": 3
+    }
+  },
+  {
+    "class": "BuffPotion",
+    "name": "Zephyr Essence",
+    "mana_consume": 20,
+    "uses": 1,
+    "buff": {
+      "name": "Dex buff",
+      "stat": "dexterity",
+      "amount": 200,
+      "duration": 4
+    }
   }
 ]

@@ -45,7 +45,8 @@
     "speed": 15,
     "default_weapon": "Long Sword",
     "default_potions": [
-      "Healing Elixir"
+      "Healing Elixir",
+      "Dragon's Blood"
     ]
   },
   {
@@ -69,7 +70,8 @@
     "speed": 20,
     "default_weapon": "Dagger",
     "default_potions": [
-      "Healing Elixir"
+      "Healing Elixir",
+      "Zephyr Essence"
     ]
   },
   {

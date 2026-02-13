@@ -102,6 +102,8 @@ class GameFactory:
             if cls is HealPotion:
                 kwargs["healing_effect"] = data["healing_effect"]
             if cls is BuffPotion:
-                kwargs["buff"] = data["buff"]
-
+                kwargs["buff"] = Buff(data["buff"]["name"],
+                                      data["buff"]["stat"],
+                                      data["buff"]["amount"],
+                                      data["buff"]["duration"])
             return cls(**kwargs)
