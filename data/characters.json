@@ -21,7 +21,8 @@
     "speed": 15,
     "default_weapon": "Holy Spear",
     "default_potions": [
-      "Healing Elixir"
+      "Healing Elixir",
+      "Abyssal Clarity"
     ]
   },
   {

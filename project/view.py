@@ -7,6 +7,7 @@ from project.game_state import GameState
 from project.items import ArmorPiece
 from project.potions import Potion
 
+LEVEL_SHOW = (340, 50)
 PLAYER_START_POS = (200, 400)
 ENEMY_START_POS = (600, 400)
 
@@ -458,11 +459,11 @@ class UIManager:
                 return card.model
         return None
 
-    def render_game(self, game_state, all_sprites=None, hero=None, enemy=None):
+    def render_game(self, game_state, level: int, all_sprites=None, hero=None, enemy=None):
         if game_state == GameState.CHARACTER_SELECT:
             self._draw_character_selection_scene()
         elif game_state == GameState.BATTLE_MODE:
-            self._draw_battle_scene(all_sprites, hero, enemy)
+            self._draw_battle_scene(all_sprites, hero, enemy, level)
         pygame.display.flip()
 
     def _draw_character_selection_scene(self):
@@ -472,11 +473,15 @@ class UIManager:
         for card in self.character_cards:
             card.draw(self.screen)
 
+    def show_level(self, level, screen):
+        text = self.font.render(f"Livello {level}", True, (0, 0, 0))
+        screen.blit(text, LEVEL_SHOW)
+
     def update(self):
         self.attack_button.update()
         self.special_ability_button.update()
 
-    def _draw_battle_scene(self, all_sprites, hero, enemy):
+    def _draw_battle_scene(self, all_sprites, hero, enemy, level: int):
         if self.background:
             self.screen.blit(self.background, (0, 0))
             self.attack_button.draw(self.screen)
@@ -487,6 +492,7 @@ class UIManager:
 
             if hero:
                 hero.draw_hp_bar(self.screen)
+                self.show_level(level, self.screen)
 
             if enemy:
                 enemy.draw_hp_bar(self.screen)

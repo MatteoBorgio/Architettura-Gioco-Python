@@ -26,8 +26,20 @@
     "buff": {
       "name": "Dex buff",
       "stat": "dexterity",
-      "amount": 200,
+      "amount": 8,
       "duration": 4
+    }
+  },
+  {
+    "class": "BuffPotion",
+    "name": "Abyssal Clarity",
+    "mana_consume": 20,
+    "uses": 1,
+    "buff": {
+      "name": "Int buff",
+      "stat": "intelligence",
+      "amount": 10,
+      "duration": 3
     }
   }
 ]

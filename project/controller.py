@@ -29,6 +29,8 @@ class GameController:
         self.all_sprites = pygame.sprite.Group()
         self.inventory_changed = True
 
+        self.level = 0
+
         self.load_resources()
         self.ui.create_character_selection_screen(self.characters)
         self.ui.create_battle_interface()
@@ -189,6 +191,7 @@ class GameController:
                     self.enemy_action_performed = False
                     print("Nuovo nemico apparso!")
                     self.ui.refresh_background()
+                    self.level += 1
             return
 
         if self.turn == "player":
@@ -231,10 +234,11 @@ class GameController:
                 self.game_state,
                 all_sprites=self.all_sprites,
                 hero=self.hero_sprite,
-                enemy=current_enemy
+                enemy=current_enemy,
+                level=self.level
             )
         else:
-            self.ui.render_game(self.game_state)
+            self.ui.render_game(self.game_state, self.level)
 
     def run(self):
         while self.running:
